@@ -53,5 +53,5 @@ jobs:
         with:
           app-name: 'Focall'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_29355E3B523C47238EA3AC66003A0A2D }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F3597D5AD5E6409398D7A66D55EDFB39 }}
           package: .
