@@ -1,0 +1,6 @@
+C:\Users\lance\OneDrive\Documents\ECE496\CAPSTONE\focall\frontend\obj\Debug\frontend.esproj.SuggestedBindingRedirects.cache
+C:\Users\lance\OneDrive\Documents\ECE496\CAPSTONE\focall\frontend\obj\Debug\frontend.esproj.CoreCompileInputs.cache
+C:\Users\lance\OneDrive\Documents\ECE496\CAPSTONE\frontend\obj\Debug\frontend.esproj.SuggestedBindingRedirects.cache
+C:\Users\lance\OneDrive\Documents\ECE496\CAPSTONE\frontend\obj\Debug\frontend.esproj.CoreCompileInputs.cache
+C:\Users\ASUS\OneDrive\Desktop\Fourth_Year\Capstone\Focall\focall\frontend\obj\Debug\frontend.esproj.SuggestedBindingRedirects.cache
+C:\Users\ASUS\OneDrive\Desktop\Fourth_Year\Capstone\Focall\focall\frontend\obj\Debug\frontend.esproj.CoreCompileInputs.cache
