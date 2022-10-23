@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { useState, useEffect } from 'react';
 
@@ -22,8 +21,6 @@ function App() {
             .catch(err => console.log(err))
     }, []);
 
-    const result2 = [{ "date": "2022-10-23T22:27:55.9961759-04:00", "temperatureC": 52, "temperatureF": 125, "summary": "Chilly" }, { "date": "2022-10-24T22:27:55.9961963-04:00", "temperatureC": 33, "temperatureF": 91, "summary": "Scorching" }, { "date": "2022-10-25T22:27:55.9961975-04:00", "temperatureC": 38, "temperatureF": 100, "summary": "Chilly" }, { "date": "2022-10-26T22:27:55.9961983-04:00", "temperatureC": 33, "temperatureF": 91, "summary": "Warm" }, { "date": "2022-10-27T22:27:55.9961991-04:00", "temperatureC": -7, "temperatureF": 20, "summary": "Mild" }]
-
     return (
         <div className="App">
             <table>
@@ -40,6 +37,7 @@ function App() {
                     );
                 })}
             </table>
+            <p>Learn React</p>
         </div>
     );
 }
