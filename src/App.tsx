@@ -2,6 +2,8 @@ import React from "react";
 import "./App.css";
 import { useState, useEffect } from "react";
 
+import Chat from "./Chat/Chat";
+
 type resultProps = {
   date: string;
   temperatureC: number;
@@ -35,7 +37,7 @@ function App() {
           );
         })}
       </table>
-      <p>Learn React</p>
+      <Chat />
     </div>
   );
 }
