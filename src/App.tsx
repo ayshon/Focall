@@ -5,41 +5,65 @@ import Checkbox from "./components/CheckboxComponent";
 
 
 function App() {
-    const INITIAL_STATE = [false, false, false, false, false]
-
-    // TODO: set initial checkbox values based on server state
-        // TODO: get server state
-        // TODO: update INITIAL_STATE to have values from server
-
     const buttons = [
         {
             "box_num": 11,
-            "value": INITIAL_STATE[0]
+            "value": false
         },
         {
             "box_num": 22,
-            "value": INITIAL_STATE[1]
+            "value": false
         },
         {
             "box_num": 33,
-            "value": INITIAL_STATE[2]
+            "value": false
         },
         {
             "box_num": 44,
-            "value": INITIAL_STATE[3]
+            "value": false
         },
         {
             "box_num": 55,
-            "value": INITIAL_STATE[4]
+            "value": false
         }
     ]
 
     const [check_bottons, setButtons] = React.useState(buttons);
+
+    useEffect(() => {
+        fetch("https://localhost:7009/LWWSet/GetLWWSet/1")
+          .then((response) => response.json())
+          .then((res) => updateState(res.LwwSet))
+          .catch((err) => console.log(err));
+    }, []);
     
+    const updateState = (lwwset: number[]) => {
+        const newState = check_bottons.map(obj => {
+            if (lwwset.includes(obj.box_num)) {
+              return {...obj, value: true};
+            }
+      
+            return obj;
+          });
+
+          setButtons(newState);
+    }
+
     const changeHandler = (num: number) => {
         const newState = check_bottons.map(obj => {
             if (obj.box_num === num) {
-              return {...obj, value: !obj.value};
+                // PUT request using fetch inside useEffect React hook
+                const requestOptions = {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: obj.box_num.toString()
+                };
+                if(!obj.value){
+                    fetch('https://localhost:7009/LWWSet/AddElement/1', requestOptions)
+                } else {
+                    fetch('https://localhost:7009/LWWSet/RemoveElement/1', requestOptions)
+                }
+                return {...obj, value: !obj.value};
             }
       
             return obj;
