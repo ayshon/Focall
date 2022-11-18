@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from 'react';
+import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
+
 import "../App.css";
-import { useState, useEffect } from "react";
 import Checkbox from "./CheckboxComponent";
 
 
@@ -28,15 +29,38 @@ function Checkboxes() {
         }
     ]
 
-    const [check_bottons, setButtons] = React.useState(buttons);
+    const [check_bottons, setButtons] = useState(buttons);
+    const [connection, setConnection ] = useState<any>(null);
 
     useEffect(() => {
+        const newConnection = new HubConnectionBuilder()
+            .withUrl('https://localhost:7009/hubs/frontendmessage')
+            .withAutomaticReconnect()
+            .build();
+
+        setConnection(newConnection);
+        
         fetch("https://localhost:7009/LWWSet/GetLWWSet/1")
           .then((response) => response.json())
           .then((res) => updateState(res.LwwSet))
           .catch((err) => console.log(err));
     }, []);
+
+    useEffect(() => {
+        if (connection) {
+            connection.start()
+                .then( (_: any) => {
+                    console.log('Connected!');
     
+                    connection.on('ReceiveMessage', (message: any) => {
+                        console.log(message);
+                        // updateState(message.LwwSet);
+                    });
+                })
+                .catch((e: any) => console.log('Connection failed: ', e));
+        }
+    }, [connection]);
+
     const updateState = (lwwset: number[]) => {
         const newState = check_bottons.map(obj => {
             if (lwwset.includes(obj.box_num)) {
