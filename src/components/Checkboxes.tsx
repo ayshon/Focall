@@ -54,7 +54,7 @@ function Checkboxes() {
     
                     connection.on('ReceiveMessage', (message: any) => {
                         console.log(message);
-                        // updateState(message.LwwSet);
+                        updateState(message.LwwSet);
                     });
                 })
                 .catch((e: any) => console.log('Connection failed: ', e));
@@ -62,12 +62,14 @@ function Checkboxes() {
     }, [connection]);
 
     const updateState = (lwwset: number[]) => {
+        console.log("updating state...")
         const newState = check_bottons.map(obj => {
             if (lwwset.includes(obj.box_num)) {
+              console.log({...obj, value: true});
               return {...obj, value: true};
+            } else {
+              return {...obj, value: false};
             }
-      
-            return obj;
           });
 
           setButtons(newState);
