@@ -53,8 +53,8 @@ function Checkboxes() {
                     console.log('Connected!');
     
                     connection.on('ReceiveMessage', (message: any) => {
-                        console.log(message);
-                        updateState(message.LwwSet);
+                        console.log(message.lwwSet);
+                        updateState(message.lwwSet);
                     });
                 })
                 .catch((e: any) => console.log('Connection failed: ', e));
