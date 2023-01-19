@@ -521,10 +521,10 @@ go.Shape.defineFigureGenerator("Inverter", function (shape, w, h) {
 
 function App() {
   return (
-    <div>
+    <div className="container">
       {/* <Checkboxes /> */}
+      <PaletteWrapper />
       <DiagramWrapper />
-      {/* <PaletteWrapper /> */}
     </div>
   );
 }

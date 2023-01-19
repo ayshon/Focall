@@ -28,13 +28,11 @@
   color: #61dafb;
 }
 
-.diagram-component {
-  width: 400px;
-  height: 400px;
-  border: solid 1px black;
-  background-color: white;
+.container {
+  display: flex;
 }
-.myDiagramDiv {
+
+.diagram-component {
   flex-grow: 1;
   height: 500px;
   border: solid 1px black;

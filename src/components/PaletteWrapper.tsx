@@ -245,24 +245,22 @@ function initPalette() {
 
 function PaletteWrapper() {
   return (
-    <div>
-      <ReactPalette
-        initPalette={initPalette}
-        divClassName="palette-component"
-        style={{ backgroundColor: "#eee" }}
-        nodeDataArray={[
-          { category: "input" },
-          { category: "output" },
-          { category: "and" },
-          { category: "or" },
-          { category: "xor" },
-          { category: "not" },
-          { category: "nand" },
-          { category: "nor" },
-          { category: "xnor" },
-        ]}
-      />
-    </div>
+    <ReactPalette
+      initPalette={initPalette}
+      divClassName="palette-component"
+      style={{ backgroundColor: "#eee" }}
+      nodeDataArray={[
+        { category: "input" },
+        { category: "output" },
+        { category: "and" },
+        { category: "or" },
+        { category: "xor" },
+        { category: "not" },
+        { category: "nand" },
+        { category: "nor" },
+        { category: "xnor" },
+      ]}
+    />
   );
 }
 
