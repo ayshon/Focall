@@ -4,8 +4,8 @@ import { ReactDiagram, ReactPalette } from "gojs-react";
 import Checkboxes from "./components/Checkboxes";
 
 import "./App.css";
-import DiagramWrapper from "./components/DiagramWrapper";
 import PaletteWrapper from "./components/PaletteWrapper";
+import DiagramContainer from "./components/DiagramContainer";
 
 // ---------- Functions that generate the Logic Gate figures ----------------
 
@@ -524,7 +524,7 @@ function App() {
     <div className="container">
       {/* <Checkboxes /> */}
       <PaletteWrapper />
-      <DiagramWrapper />
+      <DiagramContainer />
     </div>
   );
 }
