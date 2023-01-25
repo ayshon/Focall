@@ -62,6 +62,11 @@ export class DiagramWrapper extends React.Component<DiagramProps, {}> {
     const myDiagram = $(go.Diagram, {
       "draggingTool.isGridSnapEnabled": true, // dragged nodes will snap to a grid of 10x10 cells
       "undoManager.isEnabled": true,
+      "clickCreatingTool.archetypeNodeData": {
+        text: "new node",
+        color: "lightblue",
+      },
+
       model: $(go.GraphLinksModel, {
         linkKeyProperty: "key", // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
         linkFromPortIdProperty: "fromPort",
