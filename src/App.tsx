@@ -1,85 +1,532 @@
 import React from "react";
 import * as go from "gojs";
-import { ReactDiagram } from "gojs-react";
+import { ReactDiagram, ReactPalette } from "gojs-react";
 import Checkboxes from "./components/Checkboxes";
 
 import "./App.css";
+import PaletteWrapper from "./components/PaletteWrapper";
+import DiagramContainer from "./components/DiagramContainer";
 
-/**
- * Diagram initialization method, which is passed to the ReactDiagram component.
- * This method is responsible for making the diagram and initializing the model and any templates.
- * The model's data should not be set here, as the ReactDiagram component handles that via the other props.
- */
-function initDiagram() {
-  const $ = go.GraphObject.make;
-  // set your license key here before creating the diagram: go.Diagram.licenseKey = "...";
-  const diagram = $(go.Diagram, {
-    "undoManager.isEnabled": true, // must be set to allow for model change listening
-    // 'undoManager.maxHistoryLength': 0,  // uncomment disable undo/redo functionality
-    "clickCreatingTool.archetypeNodeData": {
-      text: "new node",
-      color: "lightblue",
-    },
-    model: new go.GraphLinksModel({
-      linkKeyProperty: "key", // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
-    }),
-  });
+// ---------- Functions that generate the Logic Gate figures ----------------
 
-  // define a simple Node template
-  diagram.nodeTemplate = $(
-    go.Node,
-    "Auto", // the Shape will go around the TextBlock
-    new go.Binding("location", "loc", go.Point.parse).makeTwoWay(
-      go.Point.stringify
-    ),
-    $(
-      go.Shape,
-      "RoundedRectangle",
-      { name: "SHAPE", fill: "white", strokeWidth: 0 },
-      // Shape.fill is bound to Node.data.color
-      new go.Binding("fill", "color")
-    ),
-    $(
-      go.TextBlock,
-      { margin: 8, editable: true }, // some room around the text
-      new go.Binding("text").makeTwoWay()
+var KAPPA = 4 * ((Math.sqrt(2) - 1) / 3);
+
+go.Shape.defineFigureGenerator("AndGate", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var cpOffset = KAPPA * 0.5;
+  var fig = new go.PathFigure(0, 0, true);
+  geo.add(fig);
+
+  // The gate body
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0.5 * w, 0));
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      w,
+      0.5 * h,
+      (0.5 + cpOffset) * w,
+      0,
+      w,
+      (0.5 - cpOffset) * h
     )
   );
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.5 * w,
+      h,
+      w,
+      (0.5 + cpOffset) * h,
+      (0.5 + cpOffset) * w,
+      h
+    )
+  );
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0, h).close());
+  geo.spot1 = go.Spot.TopLeft;
+  geo.spot2 = new go.Spot(0.55, 1);
+  return geo;
+});
 
-  return diagram;
-}
+go.Shape.defineFigureGenerator("OrGate", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var radius = 0.5;
+  var cpOffset = KAPPA * radius;
+  var centerx = 0;
+  var centery = 0.5;
+  var fig = new go.PathFigure(0, 0, true);
+  geo.add(fig);
 
-/**
- * This function handles any changes to the GoJS model.
- * It is here that you would make any updates to your React state, which is dicussed below.
- */
-function handleModelChange(changes: any) {
-  console.log("GoJS model changed!");
-}
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      w,
+      0.5 * h,
+      (centerx + cpOffset + cpOffset) * w,
+      (centery - radius) * h,
+      0.8 * w,
+      (centery - cpOffset) * h
+    )
+  );
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0,
+      h,
+      0.8 * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0,
+      0,
+      0.25 * w,
+      0.75 * h,
+      0.25 * w,
+      0.25 * h
+    ).close()
+  );
+  geo.spot1 = new go.Spot(0.2, 0.25);
+  geo.spot2 = new go.Spot(0.75, 0.75);
+  return geo;
+});
+
+go.Shape.defineFigureGenerator("XorGate", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var radius = 0.5;
+  var cpOffset = KAPPA * radius;
+  var centerx = 0.2;
+  var centery = 0.5;
+  var fig = new go.PathFigure(0.1 * w, 0, false);
+  geo.add(fig);
+
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.1 * w,
+      h,
+      0.35 * w,
+      0.25 * h,
+      0.35 * w,
+      0.75 * h
+    )
+  );
+  var fig2 = new go.PathFigure(0.2 * w, 0, true);
+  geo.add(fig2);
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      w,
+      0.5 * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      0.9 * w,
+      (centery - cpOffset) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.2 * w,
+      h,
+      0.9 * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.2 * w,
+      0,
+      0.45 * w,
+      0.75 * h,
+      0.45 * w,
+      0.25 * h
+    ).close()
+  );
+  geo.spot1 = new go.Spot(0.4, 0.25);
+  geo.spot2 = new go.Spot(0.8, 0.75);
+  return geo;
+});
+
+go.Shape.defineFigureGenerator("NorGate", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var radius = 0.5;
+  var cpOffset = KAPPA * radius;
+  var centerx = 0;
+  var centery = 0.5;
+  var fig = new go.PathFigure(0.8 * w, 0.5 * h, true);
+  geo.add(fig);
+
+  // Normal
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0,
+      h,
+      0.7 * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0,
+      0,
+      0.25 * w,
+      0.75 * h,
+      0.25 * w,
+      0.25 * h
+    )
+  );
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.8 * w,
+      0.5 * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      0.7 * w,
+      (centery - cpOffset) * h
+    )
+  );
+  radius = 0.1;
+  cpOffset = KAPPA * 0.1;
+  centerx = 0.9;
+  centery = 0.5;
+  var fig2 = new go.PathFigure((centerx - radius) * w, centery * h, true);
+  geo.add(fig2);
+  // Inversion
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery - radius) * h,
+      (centerx - radius) * w,
+      (centery - cpOffset) * h,
+      (centerx - cpOffset) * w,
+      (centery - radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx + radius) * w,
+      centery * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      (centerx + radius) * w,
+      (centery - cpOffset) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery + radius) * h,
+      (centerx + radius) * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx - radius) * w,
+      centery * h,
+      (centerx - cpOffset) * w,
+      (centery + radius) * h,
+      (centerx - radius) * w,
+      (centery + cpOffset) * h
+    )
+  );
+  geo.spot1 = new go.Spot(0.2, 0.25);
+  geo.spot2 = new go.Spot(0.6, 0.75);
+  return geo;
+});
+
+go.Shape.defineFigureGenerator("XnorGate", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var radius = 0.5;
+  var cpOffset = KAPPA * radius;
+  var centerx = 0.2;
+  var centery = 0.5;
+  var fig = new go.PathFigure(0.1 * w, 0, false);
+  geo.add(fig);
+
+  // Normal
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.1 * w,
+      h,
+      0.35 * w,
+      0.25 * h,
+      0.35 * w,
+      0.75 * h
+    )
+  );
+  var fig2 = new go.PathFigure(0.8 * w, 0.5 * h, true);
+  geo.add(fig2);
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.2 * w,
+      h,
+      0.7 * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.2 * w,
+      0,
+      0.45 * w,
+      0.75 * h,
+      0.45 * w,
+      0.25 * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.8 * w,
+      0.5 * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      0.7 * w,
+      (centery - cpOffset) * h
+    )
+  );
+  radius = 0.1;
+  cpOffset = KAPPA * 0.1;
+  centerx = 0.9;
+  centery = 0.5;
+  var fig3 = new go.PathFigure((centerx - radius) * w, centery * h, true);
+  geo.add(fig3);
+  // Inversion
+  fig3.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery - radius) * h,
+      (centerx - radius) * w,
+      (centery - cpOffset) * h,
+      (centerx - cpOffset) * w,
+      (centery - radius) * h
+    )
+  );
+  fig3.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx + radius) * w,
+      centery * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      (centerx + radius) * w,
+      (centery - cpOffset) * h
+    )
+  );
+  fig3.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery + radius) * h,
+      (centerx + radius) * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig3.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx - radius) * w,
+      centery * h,
+      (centerx - cpOffset) * w,
+      (centery + radius) * h,
+      (centerx - radius) * w,
+      (centery + cpOffset) * h
+    )
+  );
+  geo.spot1 = new go.Spot(0.4, 0.25);
+  geo.spot2 = new go.Spot(0.65, 0.75);
+  return geo;
+});
+
+go.Shape.defineFigureGenerator("NandGate", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var cpxOffset = KAPPA * 0.5;
+  var cpyOffset = KAPPA * 0.4;
+  var cpOffset = KAPPA * 0.1;
+  var radius = 0.1;
+  var centerx = 0.9;
+  var centery = 0.5;
+  var fig = new go.PathFigure(0.8 * w, 0.5 * h, true);
+  geo.add(fig);
+
+  // The gate body
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.4 * w,
+      h,
+      0.8 * w,
+      (0.5 + cpyOffset) * h,
+      (0.4 + cpxOffset) * w,
+      h
+    )
+  );
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0, h));
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0, 0));
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0.4 * w, 0));
+  fig.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      0.8 * w,
+      0.5 * h,
+      (0.4 + cpxOffset) * w,
+      0,
+      0.8 * w,
+      (0.5 - cpyOffset) * h
+    )
+  );
+  var fig2 = new go.PathFigure((centerx + radius) * w, centery * h, true);
+  geo.add(fig2);
+  // Inversion
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery + radius) * h,
+      (centerx + radius) * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx - radius) * w,
+      centery * h,
+      (centerx - cpOffset) * w,
+      (centery + radius) * h,
+      (centerx - radius) * w,
+      (centery + cpOffset) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery - radius) * h,
+      (centerx - radius) * w,
+      (centery - cpOffset) * h,
+      (centerx - cpOffset) * w,
+      (centery - radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx + radius) * w,
+      centery * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      (centerx + radius) * w,
+      (centery - cpOffset) * h
+    )
+  );
+  geo.spot1 = new go.Spot(0, 0.05);
+  geo.spot2 = new go.Spot(0.55, 0.95);
+  return geo;
+});
+
+go.Shape.defineFigureGenerator("Inverter", function (shape, w, h) {
+  var geo = new go.Geometry();
+  var cpOffset = KAPPA * 0.1;
+  var radius = 0.1;
+  var centerx = 0.9;
+  var centery = 0.5;
+  var fig = new go.PathFigure(0.8 * w, 0.5 * h, true);
+  geo.add(fig);
+
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0, h));
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0, 0));
+  fig.add(new go.PathSegment(go.PathSegment.Line, 0.8 * w, 0.5 * h));
+  var fig2 = new go.PathFigure((centerx + radius) * w, centery * h, true);
+  geo.add(fig2);
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery + radius) * h,
+      (centerx + radius) * w,
+      (centery + cpOffset) * h,
+      (centerx + cpOffset) * w,
+      (centery + radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx - radius) * w,
+      centery * h,
+      (centerx - cpOffset) * w,
+      (centery + radius) * h,
+      (centerx - radius) * w,
+      (centery + cpOffset) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      centerx * w,
+      (centery - radius) * h,
+      (centerx - radius) * w,
+      (centery - cpOffset) * h,
+      (centerx - cpOffset) * w,
+      (centery - radius) * h
+    )
+  );
+  fig2.add(
+    new go.PathSegment(
+      go.PathSegment.Bezier,
+      (centerx + radius) * w,
+      centery * h,
+      (centerx + cpOffset) * w,
+      (centery - radius) * h,
+      (centerx + radius) * w,
+      (centery - cpOffset) * h
+    )
+  );
+  geo.spot1 = new go.Spot(0, 0.25);
+  geo.spot2 = new go.Spot(0.4, 0.75);
+  return geo;
+});
+
+// --------------- end of functions that generate logic gate figures ----------------------------
 
 function App() {
   return (
     <div>
       <Checkboxes />
-      <ReactDiagram
-        initDiagram={initDiagram}
-        divClassName="diagram-component"
-        nodeDataArray={[
-          { key: 0, text: "Alpha", color: "lightblue", loc: "0 0" },
-          { key: 1, text: "Beta", color: "orange", loc: "150 0" },
-          { key: 2, text: "Gamma", color: "lightgreen", loc: "0 150" },
-          { key: 3, text: "Delta", color: "pink", loc: "150 150" },
-        ]}
-        linkDataArray={[
-          { key: -1, from: 0, to: 1 },
-          { key: -2, from: 0, to: 2 },
-          { key: -3, from: 1, to: 1 },
-          { key: -4, from: 2, to: 3 },
-          { key: -5, from: 3, to: 0 },
-        ]}
-        onModelChange={handleModelChange}
-      />
-      ...
+      <div className="container">
+        <PaletteWrapper />
+        <DiagramContainer />
+      </div>
     </div>
   );
 }

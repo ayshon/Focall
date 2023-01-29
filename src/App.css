@@ -28,11 +28,22 @@
   color: #61dafb;
 }
 
+.container {
+  display: flex;
+}
+
 .diagram-component {
-  width: 400px;
-  height: 400px;
+  flex-grow: 1;
+  height: 500px;
   border: solid 1px black;
-  background-color: white;
+}
+
+.palette-component {
+  width: 100px;
+  height: 500px;
+  margin-right: 2px;
+  background-color: whitesmoke;
+  border: solid 1px black;
 }
 
 @keyframes App-logo-spin {
