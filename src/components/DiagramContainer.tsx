@@ -68,6 +68,7 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
     nodeArr.forEach((n: go.ObjectData, idx: number) => {
       this.mapNodeKeyIdx.set(n.key, idx);
     });
+    console.log("=========================");
     console.log('"nodeArr"', nodeArr);
     console.log("Map node key idx", this.mapNodeKeyIdx);
   }
@@ -82,6 +83,7 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
     });
     console.log('"linkArr"', linkArr);
     console.log("Map link key idx", this.mapLinkKeyIdx);
+    console.log("=========================");
   }
 
   /**
@@ -141,6 +143,7 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
     this.setState(
       produce((draft: DiagramState) => {
+        console.log("=========================");
         let narr = draft.nodeDataArray;
         //Maps modified the data of modified nodes to their key for faster lookup when insertedNodeKeys are checked
         if (modifiedNodeData) {
@@ -230,6 +233,8 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
           draft.modelData = modifiedModelData;
         }
         draft.skipsDiagramUpdate = true; // the GoJS model already knows about these updates
+
+        console.log("=========================");
       })
     );
   }
