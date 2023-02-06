@@ -527,6 +527,7 @@ function App() {
         <PaletteWrapper />
         <DiagramContainer />
       </div>
+      <p>Learn React</p>
     </div>
   );
 }
