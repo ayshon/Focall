@@ -16,38 +16,29 @@ interface DiagramState {
   modelData: go.ObjectData;
   selectedData: go.ObjectData | null;
   skipsDiagramUpdate: boolean;
+  cachedState: Array<go.ObjectData>;
 }
 
-class DiagramContainer extends React.Component<{}, DiagramState> {
-  // Maps to store key -> arr index for quick lookups
+interface DiagramProps {
+  dataFromApp: Array<go.ObjectData>;
+}
+
+class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
+  // Maps key -> arr index for quick lookups
   private mapNodeKeyIdx: Map<go.Key, number>;
   private mapLinkKeyIdx: Map<go.Key, number>;
 
-  constructor(props: object) {
+  constructor(props: DiagramProps) {
     super(props);
     this.state = {
-      nodeDataArray: [
-        { category: "input", key: "input1", loc: "-150 -80" },
-        { category: "or", key: "or1", loc: "-70 0" },
-        { category: "not", key: "not1", loc: "10 0" },
-        { category: "xor", key: "xor1", loc: "100 0" },
-        { category: "or", key: "or2", loc: "200 0" },
-        { category: "output", key: "output1", loc: "200 -100" },
-      ],
-      linkDataArray: [
-        { key: -1, from: "input1", fromPort: "out", to: "or1", toPort: "in1" },
-        { key: -2, from: "or1", fromPort: "out", to: "not1", toPort: "in" },
-        { key: -3, from: "not1", fromPort: "out", to: "or1", toPort: "in2" },
-        { key: -4, from: "not1", fromPort: "out", to: "xor1", toPort: "in1" },
-        { key: -5, from: "xor1", fromPort: "out", to: "or2", toPort: "in1" },
-        { key: -6, from: "or2", fromPort: "out", to: "xor1", toPort: "in2" },
-        { key: -7, from: "xor1", fromPort: "out", to: "output1", toPort: "" },
-      ],
+      nodeDataArray: this.props.dataFromApp,
+      linkDataArray: [],
       modelData: {
         canRelink: true,
       },
       selectedData: null,
       skipsDiagramUpdate: false,
+      cachedState: [],
     };
     // init maps
     this.mapNodeKeyIdx = new Map<go.Key, number>();
@@ -57,7 +48,6 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
     // bind handler methods
     this.handleDiagramEvent = this.handleDiagramEvent.bind(this);
     this.handleModelChange = this.handleModelChange.bind(this);
-    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   /**
@@ -87,6 +77,29 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
   }
 
   /**
+   * Updates Diagram state when DiagramManager receives new state from backend.
+   * Should only update state when the state received from DiagramManager has changed.
+   * @param props contains nodeDataArray that backend sent
+   * @param state current state of Diagram
+   * @returns new state that equals props, if props contained different data.
+   */
+  public static getDerivedStateFromProps(
+    props: DiagramProps,
+    state: DiagramState
+  ) {
+    if (state.cachedState != props.dataFromApp) {
+      console.log("state received from Diagram Manager: ", props.dataFromApp);
+      console.log("updating state, with state received from Diagram Manager");
+      // this.refreshNodeIndex(props.dataFromApp);
+      return {
+        cachedState: props.dataFromApp,
+        nodeDataArray: props.dataFromApp,
+        skipsDiagramUpdate: true,
+      };
+    }
+  }
+
+  /**
    * Handle any relevant DiagramEvents, in this case just selection changes.
    * On ChangedSelection, find the corresponding data and set the selectedData state.
    * @param e a GoJS DiagramEvent
@@ -94,31 +107,6 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
   public handleDiagramEvent(e: go.DiagramEvent) {
     const name = e.name;
     switch (name) {
-      // case "ChangedSelection": {
-      //   const sel = e.subject.first();
-      //   this.setState(
-      //     produce((draft: AppState) => {
-      //       if (sel) {
-      //         if (sel instanceof go.Node) {
-      //           const idx = this.mapNodeKeyIdx.get(sel.key);
-      //           if (idx !== undefined && idx >= 0) {
-      //             const nd = draft.nodeDataArray[idx];
-      //             draft.selectedData = nd;
-      //           }
-      //         } else if (sel instanceof go.Link) {
-      //           const idx = this.mapLinkKeyIdx.get(sel.key);
-      //           if (idx !== undefined && idx >= 0) {
-      //             const ld = draft.linkDataArray[idx];
-      //             draft.selectedData = ld;
-      //           }
-      //         }
-      //       } else {
-      //         draft.selectedData = null;
-      //       }
-      //     })
-      //   );
-      //   break;
-      // }
       default:
         break;
     }
@@ -143,33 +131,43 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
     this.setState(
       produce((draft: DiagramState) => {
-        console.log("=========================");
+        console.log("MAPNODEKEYIDX:", this.mapNodeKeyIdx);
         let narr = draft.nodeDataArray;
-        //Maps modified the data of modified nodes to their key for faster lookup when insertedNodeKeys are checked
+        //TODO: Resolve the issue where modifying a node received from backend crashes application.
+        //TODO: note: it is because of how nodes are added to mapNodeKeyIdx on line 163, where narr.length is used to determine
+        //TODO: the nodes's index.
+        //TODO: Alternatively, the issue is because insertednodedata assumes that inserted nodes are being inserted one at a time.
+        //TODO: Another issue: insertednodedata doesn't check if the key already exists before adding the node.
+
+        //Maps the data of modified nodes to their key for faster lookup when insertedNodeKeys are checked
         if (modifiedNodeData) {
           console.log("node data modified ", modifiedNodeData);
           modifiedNodeData.forEach((nd: go.ObjectData) => {
             modifiedNodeMap.set(nd.key, nd);
-            const idx = this.mapNodeKeyIdx.get(nd.key);
-            if (idx !== undefined && idx >= 0) {
-              narr[idx] = nd;
-              if (draft.selectedData && draft.selectedData.key === nd.key) {
-                draft.selectedData = nd;
-              }
-            }
           });
           //   console.log("Modified node map", modifiedNodeMap);
         }
         // Checks if the inserted nodes were added to mapNodeKeyIdx.
-        // If not, the nodes are added to the map.
+        // If not, the nodes are added to the map and nodeDatAarray.
         if (insertedNodeKeys) {
           console.log("node inserted", insertedNodeKeys);
           insertedNodeKeys.forEach((key: go.Key) => {
             const nd = modifiedNodeMap.get(key);
             const idx = this.mapNodeKeyIdx.get(key);
+
             if (nd && idx === undefined) {
+              console.log("adding node to mapnodeidx");
               // nodes won't be added if they already exist
-              this.mapNodeKeyIdx.set(nd.key, narr.length);
+              if (insertedNodeKeys.length > 1) {
+                this.mapNodeKeyIdx.set(
+                  nd.key,
+                  this.state.nodeDataArray.indexOf(nd.key)
+                );
+              } else {
+                this.mapNodeKeyIdx.set(nd.key, narr.length);
+              }
+              console.log("narr length: ", narr.length);
+              console.log("narr: ", narr);
               narr.push(nd);
             }
           });
@@ -193,12 +191,6 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
           modifiedLinkData.forEach((ld: go.ObjectData) => {
             modifiedLinkMap.set(ld.key, ld);
             const idx = this.mapLinkKeyIdx.get(ld.key);
-            if (idx !== undefined && idx >= 0) {
-              larr[idx] = ld;
-              if (draft.selectedData && draft.selectedData.key === ld.key) {
-                draft.selectedData = ld;
-              }
-            }
           });
         }
         // Checks if the inserted links were added to mapLinkKeyIdx.
@@ -233,45 +225,14 @@ class DiagramContainer extends React.Component<{}, DiagramState> {
           draft.modelData = modifiedModelData;
         }
         draft.skipsDiagramUpdate = true; // the GoJS model already knows about these updates
-
-        console.log("=========================");
-      })
-    );
-  }
-
-  /**
-   * Handle inspector changes, and on input field blurs, update node/link data state.
-   * @param path the path to the property being modified
-   * @param value the new value of that property
-   * @param isBlur whether the input event was a blur, indicating the edit is complete
-   */
-  public handleInputChange(path: string, value: string, isBlur: boolean) {
-    this.setState(
-      produce((draft: DiagramState) => {
-        const data = draft.selectedData as go.ObjectData; // only reached if selectedData isn't null
-        data[path] = value;
-        if (isBlur) {
-          const key = data.key;
-          if (key < 0) {
-            // negative keys are links
-            const idx = this.mapLinkKeyIdx.get(key);
-            if (idx !== undefined && idx >= 0) {
-              draft.linkDataArray[idx] = data;
-              draft.skipsDiagramUpdate = false;
-            }
-          } else {
-            const idx = this.mapNodeKeyIdx.get(key);
-            if (idx !== undefined && idx >= 0) {
-              draft.nodeDataArray[idx] = data;
-              draft.skipsDiagramUpdate = false;
-            }
-          }
-        }
       })
     );
   }
 
   public render() {
+    console.log("Diagram Container reloaded");
+    console.log("node data array: ", this.state.nodeDataArray);
+    console.log("=========================");
     return (
       <DiagramWrapper
         nodeDataArray={this.state.nodeDataArray}
