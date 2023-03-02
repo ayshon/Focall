@@ -87,16 +87,16 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     return;
   }
 
-  private sendBackendUpdates(obj: go.IncrementalData) {
+  private sendBackendUpdates(modelChanges: go.IncrementalData) {
     console.log("Sending updates to backend");
 
-    const insertedNodeKeys = obj.insertedNodeKeys;
-    const removedNodeKeys = obj.removedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
+    const insertedNodeKeys = modelChanges.insertedNodeKeys;
+    const removedNodeKeys = modelChanges.removedNodeKeys;
+    const modifiedNodeData = modelChanges.modifiedNodeData;
 
-    const insertedLinkKeys = obj.insertedLinkKeys;
-    const removedLinkKeys = obj.removedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
+    const insertedLinkKeys = modelChanges.insertedLinkKeys;
+    const removedLinkKeys = modelChanges.removedLinkKeys;
+    const modifiedLinkData = modelChanges.modifiedLinkData;
 
     // node added or modified
     if (modifiedNodeData) {
