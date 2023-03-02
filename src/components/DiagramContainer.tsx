@@ -66,7 +66,10 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     state: DiagramState
   ) {
     console.log("state received from DiagramManager: ", props.dataFromApp);
-    if (state.cachedState !== props.dataFromApp) {
+    if (state.cachedState === props.dataFromApp) {
+      return null;
+    }
+
       console.log("updating state, with state received from Diagram Manager");
       // this.refreshNodeIndex(props.dataFromApp);
       return {
