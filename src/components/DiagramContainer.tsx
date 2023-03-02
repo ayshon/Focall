@@ -4,6 +4,7 @@ import { produce } from "immer";
 
 import "../App.css";
 import { DiagramWrapper } from "./DiagramWrapper";
+import { HubConnection } from "@microsoft/signalr";
 
 /**
  * Use a linkDataArray since we'll be using a GraphLinksModel,
@@ -50,32 +51,6 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     // bind handler methods
     this.handleDiagramEvent = this.handleDiagramEvent.bind(this);
     this.handleModelChange = this.handleModelChange.bind(this);
-  }
-
-  /**
-   * Update map of node keys to their index in the array.
-   */
-  private refreshNodeIndex(nodeArr: Array<go.ObjectData>) {
-    this.mapNodeKeyIdx.clear();
-    nodeArr.forEach((n: go.ObjectData, idx: number) => {
-      this.mapNodeKeyIdx.set(n.key, idx);
-    });
-    console.log("=========================");
-    console.log('"nodeArr"', nodeArr);
-    console.log("Map node key idx", this.mapNodeKeyIdx);
-  }
-
-  /**
-   * Update map of link keys to their index in the array.
-   */
-  private refreshLinkIndex(linkArr: Array<go.ObjectData>) {
-    this.mapLinkKeyIdx.clear();
-    linkArr.forEach((l: go.ObjectData, idx: number) => {
-      this.mapLinkKeyIdx.set(l.key, idx);
-    });
-    console.log('"linkArr"', linkArr);
-    console.log("Map link key idx", this.mapLinkKeyIdx);
-    console.log("=========================");
   }
 
   /**
@@ -135,19 +110,19 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       produce((draft: DiagramState) => {
         console.log("MAPNODEKEYIDX:", this.mapNodeKeyIdx);
         let narr = draft.nodeDataArray;
-        //TODO: Resolve the issue where modifying a node received from backend crashes application.
-        //TODO: note: it is because of how nodes are added to mapNodeKeyIdx on line 163, where narr.length is used to determine
-        //TODO: the nodes's index.
-        //TODO: Alternatively, the issue is because insertednodedata assumes that inserted nodes are being inserted one at a time.
-        //TODO: Another issue: insertednodedata doesn't check if the key already exists before adding the node.
+        // TODO: Resolve the issue where modifying a node received from backend crashes application.
+        // TODO: note: it is because of how nodes are added to mapNodeKeyIdx on line 163, where narr.length is used to determine
+        // TODO: the nodes's index.
+        // TODO: Alternatively, the issue is because insertednodedata assumes that inserted nodes are being inserted one at a time.
+        // TODO: Another issue: insertednodedata doesn't check if the key already exists before adding the node.
 
-        //Maps the data of modified nodes to their key for faster lookup when insertedNodeKeys are checked
+        // Maps the data of modified nodes to their key for faster lookup when insertedNodeKeys are checked
         if (modifiedNodeData) {
           console.log("node data modified ", modifiedNodeData);
           modifiedNodeData.forEach((nd: go.ObjectData) => {
             modifiedNodeMap.set(nd.key, nd);
           });
-          //   console.log("Modified node map", modifiedNodeMap);
+          // console.log("Modified node map", modifiedNodeMap);
         }
         // Checks if the inserted nodes were added to mapNodeKeyIdx.
         // If not, the nodes are added to the map and nodeDatAarray.
@@ -186,7 +161,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           draft.nodeDataArray = narr;
           this.refreshNodeIndex(narr);
         }
-        //Maps modified the data of modified nodes to their key for faster lookup when insertedLinkKeys are checked
+        // Maps modified the data of modified nodes to their key for faster lookup when insertedLinkKeys are checked
         let larr = draft.linkDataArray;
         if (modifiedLinkData) {
           console.log("link data modified", modifiedLinkData);
@@ -244,6 +219,32 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         onModelChange={this.handleModelChange}
       />
     );
+  }
+
+  /**
+   * Update map of node keys to their index in the array.
+   */
+  private refreshNodeIndex(nodeArr: Array<go.ObjectData>) {
+    this.mapNodeKeyIdx.clear();
+    nodeArr.forEach((n: go.ObjectData, idx: number) => {
+      this.mapNodeKeyIdx.set(n.key, idx);
+    });
+    console.log("=========================");
+    console.log('"nodeArr"', nodeArr);
+    console.log("Map node key idx", this.mapNodeKeyIdx);
+  }
+
+  /**
+   * Update map of link keys to their index in the array.
+   */
+  private refreshLinkIndex(linkArr: Array<go.ObjectData>) {
+    this.mapLinkKeyIdx.clear();
+    linkArr.forEach((l: go.ObjectData, idx: number) => {
+      this.mapLinkKeyIdx.set(l.key, idx);
+    });
+    console.log('"linkArr"', linkArr);
+    console.log("Map link key idx", this.mapLinkKeyIdx);
+    console.log("=========================");
   }
 }
 
