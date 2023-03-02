@@ -40,11 +40,13 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       skipsDiagramUpdate: false,
       cachedState: [],
     };
-    // init maps
+
+    // initialize maps
     this.mapNodeKeyIdx = new Map<go.Key, number>();
     this.mapLinkKeyIdx = new Map<go.Key, number>();
     this.refreshNodeIndex(this.state.nodeDataArray);
     this.refreshLinkIndex(this.state.linkDataArray);
+
     // bind handler methods
     this.handleDiagramEvent = this.handleDiagramEvent.bind(this);
     this.handleModelChange = this.handleModelChange.bind(this);
@@ -190,7 +192,6 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           console.log("link data modified", modifiedLinkData);
           modifiedLinkData.forEach((ld: go.ObjectData) => {
             modifiedLinkMap.set(ld.key, ld);
-            const idx = this.mapLinkKeyIdx.get(ld.key);
           });
         }
         // Checks if the inserted links were added to mapLinkKeyIdx.

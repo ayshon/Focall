@@ -1,11 +1,7 @@
-import React from "react";
 import * as go from "gojs";
-import { ReactDiagram, ReactPalette } from "gojs-react";
-import Checkboxes from "./components/Checkboxes";
 
 import "./App.css";
 import PaletteWrapper from "./components/PaletteWrapper";
-import DiagramContainer from "./components/DiagramContainer";
 import DiagramManager from "./components/DiagramManager";
 
 // ---------- Functions that generate the Logic Gate figures ----------------
@@ -523,7 +519,6 @@ go.Shape.defineFigureGenerator("Inverter", function (shape, w, h) {
 function App() {
   return (
     <div>
-      {/* <Checkboxes /> */}
       <div className="container">
         <PaletteWrapper />
         <DiagramManager />
