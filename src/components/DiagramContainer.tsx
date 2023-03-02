@@ -243,24 +243,24 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   /**
    * Handle GoJS model changes, which output an object of data changes via Model.toIncrementalData.
    * This method iterates over those changes and updates state to keep in sync with the GoJS model.
-   * @param obj a JSON-formatted string
+   * @param modelChanges a JSON-formatted string
    */
-  public handleModelChange(obj: go.IncrementalData) {
-    const insertedNodeKeys = obj.insertedNodeKeys;
-    const removedNodeKeys = obj.removedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
+  public handleModelChange(modelChanges: go.IncrementalData) {
+    const insertedNodeKeys = modelChanges.insertedNodeKeys;
+    const removedNodeKeys = modelChanges.removedNodeKeys;
+    const modifiedNodeData = modelChanges.modifiedNodeData;
 
-    const insertedLinkKeys = obj.insertedLinkKeys;
-    const removedLinkKeys = obj.removedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
+    const insertedLinkKeys = modelChanges.insertedLinkKeys;
+    const removedLinkKeys = modelChanges.removedLinkKeys;
+    const modifiedLinkData = modelChanges.modifiedLinkData;
 
-    const modifiedModelData = obj.modelData;
+    const modifiedModelData = modelChanges.modelData;
 
     // maintain maps of modified data so insertions don't need slow lookups
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
 
-    this.sendBackendUpdates(obj);
+    this.sendBackendUpdates(modelChanges);
 
     this.setState(
       produce((draft: DiagramState) => {
