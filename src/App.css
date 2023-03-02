@@ -34,13 +34,13 @@
 
 .diagram-component {
   flex-grow: 1;
-  height: 500px;
+  height: 80vh;
   border: solid 1px black;
 }
 
 .palette-component {
   width: 100px;
-  height: 500px;
+  height: 80vh;
   margin-right: 2px;
   background-color: whitesmoke;
   border: solid 1px black;
