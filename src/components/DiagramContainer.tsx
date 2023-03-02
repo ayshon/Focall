@@ -104,14 +104,12 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           console.log(nodeData);
 
           console.log("Sending POST request");
-          // TODO: use loc instead of x, y
           fetch(
             "https://localhost:7009/graph/vertices?" +
               new URLSearchParams({
                 key: nodeData["key"],
                 type: nodeData["category"],
-                x: "1",
-                y: "5",
+                loc: nodeData["loc"],
               }),
             { method: "POST" }
           )
