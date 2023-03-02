@@ -88,6 +88,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   }
 
   private sendBackendUpdates(obj: go.IncrementalData) {
+    console.log("Sending updates to backend");
+
     const insertedNodeKeys = obj.insertedNodeKeys;
     const removedNodeKeys = obj.removedNodeKeys;
     const modifiedNodeData = obj.modifiedNodeData;
@@ -236,6 +238,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         }
       }
     }
+
+    console.log("==================================================");
   }
 
   /**
@@ -262,6 +266,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
 
     this.setState(
       produce((draft: DiagramState) => {
+        console.log("Setting new state");
         let narr = draft.nodeDataArray;
 
         if (modifiedNodeData) {
@@ -348,7 +353,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         }
 
         draft.skipsDiagramUpdate = true; // the GoJS model already knows about these updates
-        console.log("------------------");
+        console.log("==================================================");
       })
     );
   }
@@ -356,7 +361,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   public render() {
     console.log("DiagramContainer rendering");
     console.log("node data array: ", this.state.nodeDataArray);
-    console.log("=========================");
+    console.log("==================================================");
     return (
       <DiagramWrapper
         nodeDataArray={this.state.nodeDataArray}
@@ -377,9 +382,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     nodeArr.forEach((n: go.ObjectData, idx: number) => {
       this.mapNodeKeyIdx.set(n.key, idx);
     });
-    console.log("=========================");
     console.log('"nodeArr"', nodeArr);
     console.log("Map node key idx", this.mapNodeKeyIdx);
+    console.log("==================================================");
   }
 
   /**
@@ -392,7 +397,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     });
     console.log('"linkArr"', linkArr);
     console.log("Map link key idx", this.mapLinkKeyIdx);
-    console.log("=========================");
+    console.log("==================================================");
   }
 }
 
