@@ -191,6 +191,20 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       produce((draft: DiagramState) => {
         let narr = draft.nodeDataArray;
 
+        if (modifiedNodeData) {
+          console.log("node data modified ", modifiedNodeData);
+
+          modifiedNodeData.forEach((nd: go.ObjectData) => {
+            modifiedNodeMap.set(nd.key, nd);
+
+            const idx = this.mapNodeKeyIdx.get(nd.key);
+            if (idx !== undefined && idx >= 0) {
+              narr[idx] = nd;
+            }
+          });
+          console.log("Modified node map", modifiedNodeMap);
+        }
+
         if (insertedNodeKeys) {
           console.log("node(s) inserted", insertedNodeKeys);
 
@@ -221,21 +235,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           draft.nodeDataArray = narr;
           this.refreshNodeIndex(narr);
         }
-
-        if (modifiedNodeData) {
-          console.log("node data modified ", modifiedNodeData);
-
-          modifiedNodeData.forEach((nd: go.ObjectData) => {
-            modifiedNodeMap.set(nd.key, nd);
-
-            const idx = this.mapNodeKeyIdx.get(nd.key);
-            if (idx !== undefined && idx >= 0) {
-              narr[idx] = nd;
-            }
-          });
-          console.log("Modified node map", modifiedNodeMap);
-        }
-
+        //Maps modified the data of modified nodes to their key for faster lookup when insertedLinkKeys are checked
         let larr = draft.linkDataArray;
         if (modifiedLinkData) {
           console.log("link data modified", modifiedLinkData);
