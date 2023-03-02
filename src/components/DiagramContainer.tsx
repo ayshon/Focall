@@ -92,6 +92,10 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     const removedNodeKeys = obj.removedNodeKeys;
     const modifiedNodeData = obj.modifiedNodeData;
 
+    const insertedLinkKeys = obj.insertedLinkKeys;
+    const removedLinkKeys = obj.removedLinkKeys;
+    const modifiedLinkData = obj.modifiedLinkData;
+
     // node added or modified
     if (modifiedNodeData) {
       for (let nodeData of modifiedNodeData) {
@@ -161,6 +165,72 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
             }
           })
           .catch((err) => console.log(err));
+      }
+    }
+
+    if (modifiedLinkData) {
+      console.log(modifiedLinkData);
+
+      for (let modifiedLink of modifiedLinkData) {
+        if (
+          insertedLinkKeys &&
+          insertedLinkKeys.includes(modifiedLink["key"])
+        ) {
+          fetch(
+            "https://localhost:7009/graph/edges?" +
+              new URLSearchParams({
+                srcKey: modifiedLink["from"].toString(),
+                dstKey: modifiedLink["to"].toString(),
+              }),
+            { method: "POST" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully added edge on backend`);
+                console.log(modifiedLink);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+        }
+      }
+    }
+
+    if (removedLinkKeys) {
+      for (let removedLinkKey of removedLinkKeys) {
+        for (let linkData of this.state.linkDataArray) {
+          if (removedLinkKey === linkData["key"]) {
+            fetch(
+              "https://localhost:7009/graph/edges?" +
+                new URLSearchParams({
+                  srcKey: linkData["from"].toString(),
+                  dstKey: linkData["to"].toString(),
+                }),
+              { method: "DELETE" }
+            )
+              .then((response) => {
+                if (response.ok) {
+                  console.log(`Successfully removed edge on backend`);
+                  console.log(linkData);
+                } else {
+                  throw new Error(
+                    JSON.stringify({
+                      status: response.status,
+                      body: response.text(),
+                    })
+                  );
+                }
+              })
+              .catch((err) => console.log(err));
+          }
+        }
+        continue;
       }
     }
   }
