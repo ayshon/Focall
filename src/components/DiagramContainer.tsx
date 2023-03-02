@@ -69,14 +69,14 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       return null;
     }
 
-      console.log("updating state, with state received from Diagram Manager");
-      // this.refreshNodeIndex(props.dataFromApp);
-      return {
-        cachedState: props.dataFromApp,
-        nodeDataArray: props.dataFromApp,
-        skipsDiagramUpdate: true,
-      };
-    }
+    console.log("updating state, with state received from Diagram Manager");
+    // this.refreshNodeIndex(props.dataFromApp);
+    return {
+      cachedState: props.dataFromApp,
+      nodeDataArray: props.dataFromApp,
+      skipsDiagramUpdate: true,
+    };
+  }
 
   /**
    * Handle any relevant DiagramEvents, in this case just selection changes.
@@ -87,6 +87,81 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     return;
   }
 
+  private sendBackendUpdates(obj: go.IncrementalData) {
+    const insertedNodeKeys = obj.insertedNodeKeys;
+    const removedNodeKeys = obj.removedNodeKeys;
+    const modifiedNodeData = obj.modifiedNodeData;
+
+    // node added or modified
+    if (modifiedNodeData) {
+      for (let nodeData of modifiedNodeData) {
+        if (insertedNodeKeys && insertedNodeKeys.includes(nodeData["key"])) {
+          console.log("node was inserted");
+          console.log(nodeData);
+
+          console.log("Sending POST request");
+          // TODO: use loc instead of x, y
+          fetch(
+            "https://localhost:7009/graph/vertices?" +
+              new URLSearchParams({
+                key: nodeData["key"],
+                type: nodeData["category"],
+                x: "1",
+                y: "5",
+              }),
+            { method: "POST" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully added node on backend`, nodeData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+        }
+        // node modified
+        else {
+          // TODO: update position with PUT request
+        }
+      }
+    }
+
+    // node removed
+    if (removedNodeKeys) {
+      for (let removedNodeKey of removedNodeKeys) {
+        if (removedNodeKey === undefined) {
+          continue;
+        }
+
+        fetch(
+          "https://localhost:7009/graph/vertices?" +
+            new URLSearchParams({
+              key: removedNodeKey.toString(),
+            }),
+          { method: "DELETE" }
+        )
+          .then((response) => {
+            if (response.ok) {
+              console.log(
+                `Successfully deleted key ${removedNodeKey} on backend`
+              );
+            } else {
+              throw new Error(
+                JSON.stringify({
+                  status: response.status,
+                  body: response.text(),
+                })
+              );
+            }
+          })
+          .catch((err) => console.log(err));
+      }
     }
   }
 
@@ -109,6 +184,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     // maintain maps of modified data so insertions don't need slow lookups
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
+
+    this.sendBackendUpdates(obj);
 
     this.setState(
       produce((draft: DiagramState) => {
