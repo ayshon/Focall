@@ -42,11 +42,13 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       skipsDiagramUpdate: false,
       cachedState: [],
     };
-    // init maps
+
+    // initialize maps
     this.mapNodeKeyIdx = new Map<go.Key, number>();
     this.mapLinkKeyIdx = new Map<go.Key, number>();
     this.refreshNodeIndex(this.state.nodeDataArray);
     this.refreshLinkIndex(this.state.linkDataArray);
+
     // bind handler methods
     this.handleDiagramEvent = this.handleDiagramEvent.bind(this);
     this.handleModelChange = this.handleModelChange.bind(this);
