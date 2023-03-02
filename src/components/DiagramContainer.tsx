@@ -3,7 +3,6 @@ import * as go from "gojs";
 import { produce } from "immer";
 import "../App.css";
 import { DiagramWrapper } from "./DiagramWrapper";
-import { HubConnection } from "@microsoft/signalr";
 
 /**
  * Use a linkDataArray since we'll be using a GraphLinksModel,
@@ -78,7 +77,6 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         skipsDiagramUpdate: true,
       };
     }
-  }
 
   /**
    * Handle any relevant DiagramEvents, in this case just selection changes.
@@ -100,11 +98,13 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    */
   public handleModelChange(obj: go.IncrementalData) {
     const insertedNodeKeys = obj.insertedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
     const removedNodeKeys = obj.removedNodeKeys;
+    const modifiedNodeData = obj.modifiedNodeData;
+
     const insertedLinkKeys = obj.insertedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
     const removedLinkKeys = obj.removedLinkKeys;
+    const modifiedLinkData = obj.modifiedLinkData;
+
     const modifiedModelData = obj.modelData;
 
     // maintain maps of modified data so insertions don't need slow lookups
@@ -113,24 +113,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
 
     this.setState(
       produce((draft: DiagramState) => {
-        console.log("MAPNODEKEYIDX:", this.mapNodeKeyIdx);
-
-        
         let narr = draft.nodeDataArray;
-
-        if (modifiedNodeData) {
-          console.log("node data modified ", modifiedNodeData);
-          
-          modifiedNodeData.forEach((nd: go.ObjectData) => {
-            modifiedNodeMap.set(nd.key, nd);
-
-            const idx = this.mapNodeKeyIdx.get(nd.key);
-            if (idx !== undefined && idx >= 0) {
-              narr[idx] = nd;
-            }
-          });
-          console.log("Modified node map", modifiedNodeMap);
-        }
 
         if (insertedNodeKeys) {
           console.log("node(s) inserted", insertedNodeKeys);
@@ -156,12 +139,26 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
 
         if (removedNodeKeys) {
           console.log("node(s) removed", removedNodeKeys);
-          narr = narr.filter((nd: go.ObjectData) => !removedNodeKeys.includes(nd.key));
+          narr = narr.filter(
+            (nd: go.ObjectData) => !removedNodeKeys.includes(nd.key)
+          );
           draft.nodeDataArray = narr;
           this.refreshNodeIndex(narr);
         }
 
+        if (modifiedNodeData) {
+          console.log("node data modified ", modifiedNodeData);
 
+          modifiedNodeData.forEach((nd: go.ObjectData) => {
+            modifiedNodeMap.set(nd.key, nd);
+
+            const idx = this.mapNodeKeyIdx.get(nd.key);
+            if (idx !== undefined && idx >= 0) {
+              narr[idx] = nd;
+            }
+          });
+          console.log("Modified node map", modifiedNodeMap);
+        }
 
         let larr = draft.linkDataArray;
         if (modifiedLinkData) {
@@ -189,12 +186,12 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
 
         if (removedLinkKeys) {
           console.log("link(s) removed", removedLinkKeys);
-          larr = larr.filter((ld: go.ObjectData) => !removedLinkKeys.includes(ld.key));
+          larr = larr.filter(
+            (ld: go.ObjectData) => !removedLinkKeys.includes(ld.key)
+          );
           draft.linkDataArray = larr;
           this.refreshLinkIndex(larr);
         }
-
-
 
         if (modifiedModelData) {
           console.log("model data modified", modifiedModelData);
