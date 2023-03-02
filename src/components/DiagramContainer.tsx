@@ -83,11 +83,10 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    * On ChangedSelection, find the corresponding data and set the selectedData state.
    * @param e a GoJS DiagramEvent
    */
-  public handleDiagramEvent(e: go.DiagramEvent) {
-    const name = e.name;
-    switch (name) {
-      default:
-        break;
+  public handleDiagramEvent(event: go.DiagramEvent) {
+    return;
+  }
+
     }
   }
 
