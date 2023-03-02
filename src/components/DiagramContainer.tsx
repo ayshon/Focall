@@ -33,6 +33,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     super(props);
     this.state = {
       nodeDataArray: this.props.dataFromApp,
+      // TODO: linkDataArray will need to depend on data from app as well
       linkDataArray: [],
       modelData: {
         canRelink: true,
@@ -191,6 +192,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           modifiedLinkData.forEach((ld: go.ObjectData) => {
             modifiedLinkMap.set(ld.key, ld);
             const idx = this.mapLinkKeyIdx.get(ld.key);
+            if (idx !== undefined && idx >= 0) {
+              larr[idx] = ld;
+            }
           });
         }
         // Checks if the inserted links were added to mapLinkKeyIdx.
