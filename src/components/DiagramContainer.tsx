@@ -25,6 +25,7 @@ interface DiagramProps {
 
 class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   // Maps key -> arr index for quick lookups
+  // Maps are used to check if node (go.Key) is already in the array.
   private mapNodeKeyIdx: Map<go.Key, number>;
   private mapLinkKeyIdx: Map<go.Key, number>;
 
@@ -32,6 +33,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     super(props);
     this.state = {
       nodeDataArray: this.props.dataFromApp,
+      // TODO: linkDataArray will need to depend on data from app as well
       linkDataArray: [],
       modelData: {
         canRelink: true,
@@ -56,13 +58,15 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    * Update map of node keys to their index in the array.
    */
   private refreshNodeIndex(nodeArr: Array<go.ObjectData>) {
+    console.log("=========================");
+    console.log("refreshing mapNodeIdx");
+    console.log('"nodeArr"', nodeArr);
+    console.log("Map node key idx", this.mapNodeKeyIdx);
     this.mapNodeKeyIdx.clear();
     nodeArr.forEach((n: go.ObjectData, idx: number) => {
       this.mapNodeKeyIdx.set(n.key, idx);
     });
-    console.log("=========================");
-    console.log('"nodeArr"', nodeArr);
-    console.log("Map node key idx", this.mapNodeKeyIdx);
+    console.log("map size: ", this.mapNodeKeyIdx.size);
   }
 
   /**
@@ -73,8 +77,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     linkArr.forEach((l: go.ObjectData, idx: number) => {
       this.mapLinkKeyIdx.set(l.key, idx);
     });
-    console.log('"linkArr"', linkArr);
-    console.log("Map link key idx", this.mapLinkKeyIdx);
+    // console.log('"linkArr"', linkArr);
+    // console.log("Map link key idx", this.mapLinkKeyIdx);
     console.log("=========================");
   }
 
@@ -89,8 +93,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     props: DiagramProps,
     state: DiagramState
   ) {
+    console.log("state received from Diagram Manager: ", props.dataFromApp);
     if (state.cachedState != props.dataFromApp) {
-      console.log("state received from Diagram Manager: ", props.dataFromApp);
       console.log("updating state, with state received from Diagram Manager");
       // this.refreshNodeIndex(props.dataFromApp);
       return {
@@ -135,41 +139,38 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       produce((draft: DiagramState) => {
         console.log("MAPNODEKEYIDX:", this.mapNodeKeyIdx);
         let narr = draft.nodeDataArray;
-        //TODO: Resolve the issue where modifying a node received from backend crashes application.
-        //TODO: note: it is because of how nodes are added to mapNodeKeyIdx on line 163, where narr.length is used to determine
-        //TODO: the nodes's index.
-        //TODO: Alternatively, the issue is because insertednodedata assumes that inserted nodes are being inserted one at a time.
-        //TODO: Another issue: insertednodedata doesn't check if the key already exists before adding the node.
 
-        //Maps the data of modified nodes to their key for faster lookup when insertedNodeKeys are checked
+        //Maps the data of modified nodes to their key for faster node data lookup when insertedNodeKeys are checked
         if (modifiedNodeData) {
           console.log("node data modified ", modifiedNodeData);
           modifiedNodeData.forEach((nd: go.ObjectData) => {
             modifiedNodeMap.set(nd.key, nd);
+            const idx = this.mapNodeKeyIdx.get(nd.key);
+            // check if node exists
+            if (idx !== undefined && idx >= 0) {
+              narr[idx] = nd;
+            }
           });
-          //   console.log("Modified node map", modifiedNodeMap);
+          console.log("Modified node map", modifiedNodeMap);
         }
-        // Checks if the inserted nodes were added to mapNodeKeyIdx.
+        // Checks if the inserted nodes were added to mapNodeKeyIdx (i.e. check if node is already in array).
         // If not, the nodes are added to the map and nodeDatAarray.
         if (insertedNodeKeys) {
-          console.log("node inserted", insertedNodeKeys);
+          console.log("node(s) inserted", insertedNodeKeys);
           insertedNodeKeys.forEach((key: go.Key) => {
+            // Check if multiple nodes were added at the same time
+            // this can only happen when state is received from backend
+            if (insertedNodeKeys.length > 1) {
+              this.refreshNodeIndex(narr);
+            }
             const nd = modifiedNodeMap.get(key);
+            // Check if node with this key already exists
             const idx = this.mapNodeKeyIdx.get(key);
-
             if (nd && idx === undefined) {
               console.log("adding node to mapnodeidx");
-              // nodes won't be added if they already exist
-              if (insertedNodeKeys.length > 1) {
-                this.mapNodeKeyIdx.set(
-                  nd.key,
-                  this.state.nodeDataArray.indexOf(nd.key)
-                );
-              } else {
-                this.mapNodeKeyIdx.set(nd.key, narr.length);
-              }
+              // nodes won't be added to mapNodeKeyIdx if they already exist
+              this.mapNodeKeyIdx.set(nd.key, narr.length);
               console.log("narr length: ", narr.length);
-              console.log("narr: ", narr);
               narr.push(nd);
             }
           });
@@ -192,6 +193,10 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           console.log("link data modified", modifiedLinkData);
           modifiedLinkData.forEach((ld: go.ObjectData) => {
             modifiedLinkMap.set(ld.key, ld);
+            const idx = this.mapLinkKeyIdx.get(ld.key);
+            if (idx !== undefined && idx >= 0) {
+              larr[idx] = ld;
+            }
           });
         }
         // Checks if the inserted links were added to mapLinkKeyIdx.
@@ -226,6 +231,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           draft.modelData = modifiedModelData;
         }
         draft.skipsDiagramUpdate = true; // the GoJS model already knows about these updates
+        console.log("------------------");
       })
     );
   }
