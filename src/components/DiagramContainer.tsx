@@ -204,6 +204,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     }
 
     if (removedLinkKeys) {
+      // NOTE: this is O(n^2)
+      // FIXME: keep an eye on this if its slow
       for (let removedLinkKey of removedLinkKeys) {
         for (let linkData of this.state.linkDataArray) {
           if (removedLinkKey !== linkData["key"]) {
