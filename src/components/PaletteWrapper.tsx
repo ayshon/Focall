@@ -1,6 +1,6 @@
 import React from "react";
 import * as go from "gojs";
-import { ReactDiagram, ReactPalette } from "gojs-react";
+import { ReactPalette } from "gojs-react";
 
 import "../App.css";
 
