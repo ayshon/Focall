@@ -3,6 +3,7 @@ import { HubConnectionBuilder } from "@microsoft/signalr";
 
 import * as go from "gojs";
 import DiagramContainer from "./DiagramContainer";
+import { link } from "fs";
 
 function DiagramManager() {
   // --------------- Connection to Backend Setup ---------------
@@ -10,6 +11,7 @@ function DiagramManager() {
   const [backendListener, setBackendListener] = useState<any>(null);
   const [nodeDataArray, setNodeDataArray] = useState<go.ObjectData[]>([]);
   const [linkDataArray, setLinkDataArray] = useState<go.ObjectData[]>([]);
+  const [fromOther, setFromOther] = useState<boolean>(false);
 
   useEffect(() => {
     setBackendListener(
@@ -22,7 +24,7 @@ function DiagramManager() {
 
   useEffect(() => {
     console.log("Diagram Manager: fetching state");
-    fetch("https://localhost:7009/TPTPGraph/LookupNodes/1")
+    fetch("https://localhost:7009/Graph/")
       .then((res) => res.json())
       .then((res) => updateState(res))
       .catch((err) => console.log(err));
@@ -53,16 +55,28 @@ function DiagramManager() {
     // TODO cont.: will need to handle that message structure.
 
     console.log("Updating DiagramManager state.");
-    // console.log("res = ", res);
-    setNodeDataArray(res);
+    // console.log("RESULT", res);
+    setNodeDataArray(res.vertices);
+    setLinkDataArray(res.edges);
+    setFromOther(true);
   };
+
+  useEffect(() => {
+    setFromOther(false);
+  });
 
   console.log(
     "Diagram Manager: Sending the following state to Diagram Container: ",
     nodeDataArray
   );
 
-  return <DiagramContainer dataFromApp={nodeDataArray} />;
+  return (
+    <DiagramContainer
+      newNodeState={nodeDataArray}
+      newLinkState={linkDataArray}
+      fromOther={fromOther}
+    />
+  );
 }
 
 export default DiagramManager;
