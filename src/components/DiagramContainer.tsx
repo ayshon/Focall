@@ -15,11 +15,14 @@ interface DiagramState {
   modelData: go.ObjectData;
   selectedData: go.ObjectData | null;
   skipsDiagramUpdate: boolean;
-  cachedState: Array<go.ObjectData>;
+  cachedNodeState: Array<go.ObjectData>;
+  cachedLinkState: Array<go.ObjectData>;
 }
 
 interface DiagramProps {
-  dataFromApp: Array<go.ObjectData>;
+  newNodeState: Array<go.ObjectData>;
+  newLinkState: Array<go.ObjectData>;
+  fromOther: boolean;
 }
 
 class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
@@ -31,15 +34,16 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   constructor(props: DiagramProps) {
     super(props);
     this.state = {
-      nodeDataArray: this.props.dataFromApp,
+      nodeDataArray: this.props.newNodeState,
       // TODO: linkDataArray will need to depend on data from app as well
-      linkDataArray: [],
+      linkDataArray: this.props.newLinkState,
       modelData: {
         canRelink: true,
       },
       selectedData: null,
       skipsDiagramUpdate: false,
-      cachedState: [],
+      cachedNodeState: [],
+      cachedLinkState: [],
     };
 
     // initialize maps
@@ -64,16 +68,29 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     props: DiagramProps,
     state: DiagramState
   ) {
-    console.log("state received from DiagramManager: ", props.dataFromApp);
-    if (state.cachedState === props.dataFromApp) {
+    console.log(
+      "node state received from DiagramManager: ",
+      props.newNodeState
+    );
+    console.log(
+      "link state received from DiagramManager: ",
+      props.newLinkState
+    );
+    if (
+      state.cachedNodeState === props.newNodeState &&
+      state.cachedLinkState === props.newLinkState
+    ) {
+      console.log("no new state from server.");
       return null;
     }
 
     console.log("updating state, with state received from Diagram Manager");
     // this.refreshNodeIndex(props.dataFromApp);
     return {
-      cachedState: props.dataFromApp,
-      nodeDataArray: props.dataFromApp,
+      cachedNodeState: props.newNodeState,
+      nodeDataArray: props.newNodeState,
+      cachedLinkState: props.newLinkState,
+      linkDataArray: props.newLinkState,
       skipsDiagramUpdate: true,
     };
   }
@@ -267,7 +284,10 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
 
-    this.sendBackendUpdates(modelChanges);
+    console.log("fromOther: ", this.props.fromOther);
+    if (!this.props.fromOther) {
+      this.sendBackendUpdates(modelChanges);
+    }
 
     this.setState(
       produce((draft: DiagramState) => {
@@ -366,6 +386,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   public render() {
     console.log("DiagramContainer rendering");
     console.log("node data array: ", this.state.nodeDataArray);
+    console.log("link data array: ", this.state.linkDataArray);
     console.log("==================================================");
     return (
       <DiagramWrapper
@@ -387,9 +408,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     nodeArr.forEach((n: go.ObjectData, idx: number) => {
       this.mapNodeKeyIdx.set(n.key, idx);
     });
-    console.log('"nodeArr"', nodeArr);
-    console.log("Map node key idx", this.mapNodeKeyIdx);
-    console.log("==================================================");
+    // console.log('"nodeArr"', nodeArr);
+    // console.log("Map node key idx", this.mapNodeKeyIdx);
+    // console.log("==================================================");
   }
 
   /**
@@ -400,9 +421,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     linkArr.forEach((l: go.ObjectData, idx: number) => {
       this.mapLinkKeyIdx.set(l.key, idx);
     });
-    console.log('"linkArr"', linkArr);
-    console.log("Map link key idx", this.mapLinkKeyIdx);
-    console.log("==================================================");
+    // console.log('"linkArr"', linkArr);
+    // console.log("Map link key idx", this.mapLinkKeyIdx);
+    // console.log("==================================================");
   }
 }
 
