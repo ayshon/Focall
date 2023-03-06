@@ -208,32 +208,34 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     if (removedLinkKeys) {
       for (let removedLinkKey of removedLinkKeys) {
         for (let linkData of this.state.linkDataArray) {
-          if (removedLinkKey === linkData["key"]) {
-            fetch(
-              "https://localhost:7009/graph/edges?" +
-                new URLSearchParams({
-                  srcKey: linkData["from"].toString(),
-                  dstKey: linkData["to"].toString(),
-                }),
-              { method: "DELETE" }
-            )
-              .then((response) => {
-                if (response.ok) {
-                  console.log(`Successfully removed edge on backend`);
-                  console.log(linkData);
-                } else {
-                  throw new Error(
-                    JSON.stringify({
-                      status: response.status,
-                      body: response.text(),
-                    })
-                  );
-                }
-              })
-              .catch((err) => console.log(err));
+          if (removedLinkKey !== linkData["key"]) {
+            continue;
           }
+
+          fetch(
+            "https://localhost:7009/graph/edges?" +
+              new URLSearchParams({
+                srcKey: linkData["from"].toString(),
+                dstKey: linkData["to"].toString(),
+              }),
+            { method: "DELETE" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully removed edge on backend`);
+                console.log(linkData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+          break;
         }
-        continue;
       }
     }
   }
