@@ -87,14 +87,16 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     return;
   }
 
-  private sendBackendUpdates(obj: go.IncrementalData) {
-    const insertedNodeKeys = obj.insertedNodeKeys;
-    const removedNodeKeys = obj.removedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
+  private sendBackendUpdates(modelChanges: go.IncrementalData) {
+    console.log("Sending updates to backend");
 
-    const insertedLinkKeys = obj.insertedLinkKeys;
-    const removedLinkKeys = obj.removedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
+    const insertedNodeKeys = modelChanges.insertedNodeKeys;
+    const removedNodeKeys = modelChanges.removedNodeKeys;
+    const modifiedNodeData = modelChanges.modifiedNodeData;
+
+    const insertedLinkKeys = modelChanges.insertedLinkKeys;
+    const removedLinkKeys = modelChanges.removedLinkKeys;
+    const modifiedLinkData = modelChanges.modifiedLinkData;
 
     // node added or modified
     if (modifiedNodeData) {
@@ -104,14 +106,12 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           console.log(nodeData);
 
           console.log("Sending POST request");
-          // TODO: use loc instead of x, y
           fetch(
             "https://localhost:7009/graph/vertices?" +
               new URLSearchParams({
                 key: nodeData["key"],
                 type: nodeData["category"],
-                x: "1",
-                y: "5",
+                loc: nodeData["loc"],
               }),
             { method: "POST" }
           )
@@ -206,6 +206,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     }
 
     if (removedLinkKeys) {
+      // NOTE: this is O(n^2)
+      // FIXME: keep an eye on this if its slow
       for (let removedLinkKey of removedLinkKeys) {
         for (let linkData of this.state.linkDataArray) {
           if (removedLinkKey !== linkData["key"]) {
@@ -234,36 +236,40 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
               }
             })
             .catch((err) => console.log(err));
+
           break;
         }
       }
     }
+
+    console.log("==================================================");
   }
 
   /**
    * Handle GoJS model changes, which output an object of data changes via Model.toIncrementalData.
    * This method iterates over those changes and updates state to keep in sync with the GoJS model.
-   * @param obj a JSON-formatted string
+   * @param modelChanges a JSON-formatted string
    */
-  public handleModelChange(obj: go.IncrementalData) {
-    const insertedNodeKeys = obj.insertedNodeKeys;
-    const removedNodeKeys = obj.removedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
+  public handleModelChange(modelChanges: go.IncrementalData) {
+    const insertedNodeKeys = modelChanges.insertedNodeKeys;
+    const removedNodeKeys = modelChanges.removedNodeKeys;
+    const modifiedNodeData = modelChanges.modifiedNodeData;
 
-    const insertedLinkKeys = obj.insertedLinkKeys;
-    const removedLinkKeys = obj.removedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
+    const insertedLinkKeys = modelChanges.insertedLinkKeys;
+    const removedLinkKeys = modelChanges.removedLinkKeys;
+    const modifiedLinkData = modelChanges.modifiedLinkData;
 
-    const modifiedModelData = obj.modelData;
+    const modifiedModelData = modelChanges.modelData;
 
     // maintain maps of modified data so insertions don't need slow lookups
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
 
-    this.sendBackendUpdates(obj);
+    this.sendBackendUpdates(modelChanges);
 
     this.setState(
       produce((draft: DiagramState) => {
+        console.log("Setting new state");
         let narr = draft.nodeDataArray;
 
         if (modifiedNodeData) {
@@ -350,7 +356,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         }
 
         draft.skipsDiagramUpdate = true; // the GoJS model already knows about these updates
-        console.log("------------------");
+        console.log("==================================================");
       })
     );
   }
@@ -358,7 +364,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   public render() {
     console.log("DiagramContainer rendering");
     console.log("node data array: ", this.state.nodeDataArray);
-    console.log("=========================");
+    console.log("==================================================");
     return (
       <DiagramWrapper
         nodeDataArray={this.state.nodeDataArray}
@@ -379,9 +385,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     nodeArr.forEach((n: go.ObjectData, idx: number) => {
       this.mapNodeKeyIdx.set(n.key, idx);
     });
-    console.log("=========================");
     console.log('"nodeArr"', nodeArr);
     console.log("Map node key idx", this.mapNodeKeyIdx);
+    console.log("==================================================");
   }
 
   /**
@@ -394,7 +400,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     });
     console.log('"linkArr"', linkArr);
     console.log("Map link key idx", this.mapLinkKeyIdx);
-    console.log("=========================");
+    console.log("==================================================");
   }
 }
 
