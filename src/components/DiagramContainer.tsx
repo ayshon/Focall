@@ -98,76 +98,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     const removedLinkKeys = modelChanges.removedLinkKeys;
     const modifiedLinkData = modelChanges.modifiedLinkData;
 
-    // node added or modified
-    if (modifiedNodeData) {
-      for (let nodeData of modifiedNodeData) {
-        if (insertedNodeKeys && insertedNodeKeys.includes(nodeData["key"])) {
-          console.log("node was inserted");
-          console.log(nodeData);
-
-          console.log("Sending POST request");
-          fetch(
-            "https://localhost:7009/graph/vertices?" +
-              new URLSearchParams({
-                key: nodeData["key"],
-                type: nodeData["category"],
-                loc: nodeData["loc"],
-              }),
-            { method: "POST" }
-          )
-            .then((response) => {
-              if (response.ok) {
-                console.log(`Successfully added node on backend`, nodeData);
-              } else {
-                throw new Error(
-                  JSON.stringify({
-                    status: response.status,
-                    body: response.text(),
-                  })
-                );
-              }
-            })
-            .catch((err) => console.log(err));
-        }
-        // node modified
-        else {
-          // TODO: update position with PUT request
-        }
-      }
-    }
-
-    // node removed
-    if (removedNodeKeys) {
-      for (let removedNodeKey of removedNodeKeys) {
-        if (removedNodeKey === undefined) {
-          continue;
-        }
-
-        fetch(
-          "https://localhost:7009/graph/vertices?" +
-            new URLSearchParams({
-              key: removedNodeKey.toString(),
-            }),
-          { method: "DELETE" }
-        )
-          .then((response) => {
-            if (response.ok) {
-              console.log(
-                `Successfully deleted key ${removedNodeKey} on backend`
-              );
-            } else {
-              throw new Error(
-                JSON.stringify({
-                  status: response.status,
-                  body: response.text(),
-                })
-              );
-            }
-          })
-          .catch((err) => console.log(err));
-      }
-    }
-
+    // NOTE: the order of the following matters
+    // deletion of links must come before deletion of nodes
     if (modifiedLinkData) {
       console.log(modifiedLinkData);
 
@@ -239,6 +171,76 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
 
           break;
         }
+      }
+    }
+
+    // node added or modified
+    if (modifiedNodeData) {
+      for (let nodeData of modifiedNodeData) {
+        if (insertedNodeKeys && insertedNodeKeys.includes(nodeData["key"])) {
+          console.log("node was inserted");
+          console.log(nodeData);
+
+          console.log("Sending POST request");
+          fetch(
+            "https://localhost:7009/graph/vertices?" +
+              new URLSearchParams({
+                key: nodeData["key"],
+                type: nodeData["category"],
+                loc: nodeData["loc"],
+              }),
+            { method: "POST" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully added node on backend`, nodeData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+        }
+        // node modified
+        else {
+          // TODO: update position with PUT request
+        }
+      }
+    }
+
+    // node removed
+    if (removedNodeKeys) {
+      for (let removedNodeKey of removedNodeKeys) {
+        if (removedNodeKey === undefined) {
+          continue;
+        }
+
+        fetch(
+          "https://localhost:7009/graph/vertices?" +
+            new URLSearchParams({
+              key: removedNodeKey.toString(),
+            }),
+          { method: "DELETE" }
+        )
+          .then((response) => {
+            if (response.ok) {
+              console.log(
+                `Successfully deleted key ${removedNodeKey} on backend`
+              );
+            } else {
+              throw new Error(
+                JSON.stringify({
+                  status: response.status,
+                  body: response.text(),
+                })
+              );
+            }
+          })
+          .catch((err) => console.log(err));
       }
     }
 
