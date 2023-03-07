@@ -201,7 +201,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
             "https://localhost:7009/graph/vertices?" +
               new URLSearchParams({
                 key: nodeData["key"],
-                type: nodeData["category"],
+                category: nodeData["category"],
                 loc: nodeData["loc"],
               }),
             { method: "POST" }
