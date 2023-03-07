@@ -162,8 +162,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       // NOTE: this is O(n^2)
       // FIXME: keep an eye on this if its slow
       for (let removedLinkKey of removedLinkKeys) {
-        console.log("removing link key")
-        console.log(removedLinkKey)
+        console.log("removing link key");
+        console.log(removedLinkKey);
         for (let linkData of this.state.linkDataArray) {
           console.log(linkData);
           if (removedLinkKey !== linkData["key"]) {
@@ -199,7 +199,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
-    await new Promise(f => setTimeout(f, 100));
+    await new Promise((f) => setTimeout(f, 100));
 
     // node added or modified
     if (modifiedNodeData) {
@@ -231,15 +231,37 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
               }
             })
             .catch((err) => console.log(err));
-        }
-        // node modified
-        else {
-          // TODO: update position with PUT request
+        } else {
+          console.log("node was updated");
+          console.log(nodeData);
+
+          console.log("Sending PUT modified node request");
+          fetch(
+            "https://localhost:7009/graph/vertices?" +
+              new URLSearchParams({
+                key: nodeData["key"],
+                loc: nodeData["loc"],
+              }),
+            { method: "PUT" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully modified node on backend`, nodeData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
         }
       }
     }
 
-    if(removedNodeKeys) {
+    if (removedNodeKeys) {
       console.log("removed Node keys:");
       console.log(removedNodeKeys);
     }
