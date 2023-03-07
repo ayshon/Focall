@@ -38,8 +38,6 @@ function DiagramManager() {
           console.log("Connected to backend!");
 
           backendListener.on("ReceiveMessage", (new_state: any) => {
-            // NOTE: currently message is just a list of nodes (not an object that contains a list, like what was done with lwwset)
-            console.log("Diagram Manager: new state received: ", new_state);
             updateState(new_state);
           });
         })
@@ -52,7 +50,7 @@ function DiagramManager() {
   // TODO: rename res to more useful name
   const updateState = (res: any) => {
     console.log("Updating DiagramManager state.");
-    // console.log("RESULT", res);
+    console.log("Diagram Manager: new state received:", res);
     setNodeDataArray(res.vertices);
     setLinkDataArray(res.edges);
     setFromOther(true);
@@ -63,8 +61,12 @@ function DiagramManager() {
   });
 
   console.log(
-    "Diagram Manager: Sending the following state to Diagram Container: ",
+    "Diagram Manager: Sending the following node state to Diagram Container: ",
     nodeDataArray
+  );
+  console.log(
+    "Diagram Manager: Sending the following link state to Diagram Container: ",
+    linkDataArray
   );
 
   return (

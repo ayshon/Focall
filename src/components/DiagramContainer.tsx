@@ -67,14 +67,14 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     props: DiagramProps,
     state: DiagramState
   ) {
-    console.log(
-      "node state received from DiagramManager: ",
-      props.newNodeState
-    );
-    console.log(
-      "link state received from DiagramManager: ",
-      props.newLinkState
-    );
+    // console.log(
+    //   "node state received from DiagramManager: ",
+    //   props.newNodeState
+    // );
+    // console.log(
+    //   "link state received from DiagramManager: ",
+    //   props.newLinkState
+    // );
     if (
       state.cachedNodeState === props.newNodeState &&
       state.cachedLinkState === props.newLinkState

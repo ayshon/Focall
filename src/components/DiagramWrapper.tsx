@@ -314,7 +314,7 @@ export class DiagramWrapper extends React.Component<DiagramProps, {}> {
       nodeStyle(),
       $(go.Shape, "Inverter", shapeStyle()),
       $(go.Shape, "Rectangle", portStyle(true), {
-        portId: "in",
+        portId: "in1",
         alignment: new go.Spot(0, 0.5),
       }),
       $(go.Shape, "Rectangle", portStyle(false), {
