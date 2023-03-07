@@ -88,6 +88,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   }
 
   private sendBackendUpdates(modelChanges: go.IncrementalData) {
+    // TODO: fix order of backend requests when there are multiple changes
+    // should delete links before deleting nodes
+
     console.log("Sending updates to backend");
 
     const insertedNodeKeys = modelChanges.insertedNodeKeys;
@@ -128,8 +131,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
               }
             })
             .catch((err) => console.log(err));
-        }
-        else {
+        } else {
           console.log("node was updated");
           console.log(nodeData);
 
