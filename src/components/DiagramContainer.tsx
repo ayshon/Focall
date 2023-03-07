@@ -103,7 +103,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     return;
   }
 
-  private sendBackendUpdates(modelChanges: go.IncrementalData) {
+  private async sendBackendUpdates(modelChanges: go.IncrementalData) {
     console.log("Sending updates to backend");
 
     const insertedNodeKeys = modelChanges.insertedNodeKeys;
@@ -124,6 +124,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           insertedLinkKeys &&
           insertedLinkKeys.includes(modifiedLink["key"])
         ) {
+          console.log("Sending POST add link request");
+
           fetch(
             "https://localhost:7009/graph/edges?" +
               new URLSearchParams({
@@ -153,16 +155,24 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
+    console.log("removedLinkKeys");
+    console.log(removedLinkKeys);
+
     if (removedLinkKeys) {
       // NOTE: this is O(n^2)
       // FIXME: keep an eye on this if its slow
       for (let removedLinkKey of removedLinkKeys) {
+        console.log("removing link key")
+        console.log(removedLinkKey)
         for (let linkData of this.state.linkDataArray) {
+          console.log(linkData);
           if (removedLinkKey !== linkData["key"]) {
             continue;
           }
 
-          fetch(
+          console.log("Sending POST removed link request");
+
+          await fetch(
             "https://localhost:7009/graph/edges?" +
               new URLSearchParams({
                 srcKey: linkData["from"].toString(),
@@ -189,6 +199,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
+    await new Promise(f => setTimeout(f, 100));
+
     // node added or modified
     if (modifiedNodeData) {
       for (let nodeData of modifiedNodeData) {
@@ -196,7 +208,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           console.log("node was inserted");
           console.log(nodeData);
 
-          console.log("Sending POST request");
+          console.log("Sending POST inserted node request");
           fetch(
             "https://localhost:7009/graph/vertices?" +
               new URLSearchParams({
@@ -227,12 +239,18 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
+    if(removedNodeKeys) {
+      console.log("removed Node keys:");
+      console.log(removedNodeKeys);
+    }
+
     // node removed
     if (removedNodeKeys) {
       for (let removedNodeKey of removedNodeKeys) {
         if (removedNodeKey === undefined) {
           continue;
         }
+        console.log("Sending POST removed node request");
 
         fetch(
           "https://localhost:7009/graph/vertices?" +
@@ -267,7 +285,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    * This method iterates over those changes and updates state to keep in sync with the GoJS model.
    * @param modelChanges a JSON-formatted string
    */
-  public handleModelChange(modelChanges: go.IncrementalData) {
+  public async handleModelChange(modelChanges: go.IncrementalData) {
     const insertedNodeKeys = modelChanges.insertedNodeKeys;
     const removedNodeKeys = modelChanges.removedNodeKeys;
     const modifiedNodeData = modelChanges.modifiedNodeData;
@@ -282,9 +300,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
 
-    console.log("fromOther: ", this.props.fromOther);
+    // console.log("fromOther: ", this.props.fromOther);
     if (!this.props.fromOther) {
-      this.sendBackendUpdates(modelChanges);
+      await this.sendBackendUpdates(modelChanges);
     }
 
     this.setState(
