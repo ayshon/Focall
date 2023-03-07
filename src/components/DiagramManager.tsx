@@ -49,9 +49,6 @@ function DiagramManager() {
 
   // TODO: rename res to more useful name
   const updateState = (res: any) => {
-    // TODO: Message will eventually contain both node data list and link data list, so updateState()
-    // TODO cont.: will need to handle that message structure.
-
     console.log("Updating DiagramManager state.");
     console.log("Diagram Manager: new state received:", res);
     setNodeDataArray(res.vertices);

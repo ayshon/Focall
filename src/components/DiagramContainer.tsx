@@ -35,7 +35,6 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     super(props);
     this.state = {
       nodeDataArray: this.props.newNodeState,
-      // TODO: linkDataArray will need to depend on data from app as well
       linkDataArray: this.props.newLinkState,
       modelData: {
         canRelink: true,
@@ -185,7 +184,6 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
               }
             })
             .catch((err) => console.log(err));
-
           break;
         }
       }
