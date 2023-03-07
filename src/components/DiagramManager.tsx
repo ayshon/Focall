@@ -12,16 +12,16 @@ function DiagramManager() {
   const [linkDataArray, setLinkDataArray] = useState<go.ObjectData[]>([]);
 
   useEffect(() => {
-    // connection is to listen for events from backend
-    const backendListenerConnection = new HubConnectionBuilder()
-      .withUrl("https://localhost:7009/hubs/frontendmessage")
-      .withAutomaticReconnect()
-      .build();
+    setBackendListener(
+      new HubConnectionBuilder()
+        .withUrl("https://localhost:7009/hubs/frontendmessage")
+        .withAutomaticReconnect()
+        .build()
+    );
+  }, []);
 
-    setBackendListener(backendListenerConnection);
+  useEffect(() => {
     console.log("Diagram Manager: fetching state");
-    // api calls are used for frontend to exchange data with backend
-    // when client initially connects or state is chnges
     fetch("https://localhost:7009/TPTPGraph/LookupNodes/1")
       .then((res) => res.json())
       .then((res) => updateState(res))
@@ -33,11 +33,11 @@ function DiagramManager() {
       backendListener
         .start()
         .then((_: any) => {
-          console.log("Connected!");
+          console.log("Connected to backend!");
 
           backendListener.on("ReceiveMessage", (new_state: any) => {
             // NOTE: currently message is just a list of nodes (not an object that contains a list, like what was done with lwwset)
-            console.log("Diagram Manager: new state received! ", new_state);
+            console.log("Diagram Manager: new state received: ", new_state);
             updateState(new_state);
           });
         })

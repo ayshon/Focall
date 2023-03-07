@@ -1,7 +1,6 @@
 import React from "react";
 import * as go from "gojs";
 import { produce } from "immer";
-
 import "../App.css";
 import { DiagramWrapper } from "./DiagramWrapper";
 
@@ -55,34 +54,6 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   }
 
   /**
-   * Update map of node keys to their index in the array.
-   */
-  private refreshNodeIndex(nodeArr: Array<go.ObjectData>) {
-    console.log("=========================");
-    console.log("refreshing mapNodeIdx");
-    console.log('"nodeArr"', nodeArr);
-    console.log("Map node key idx", this.mapNodeKeyIdx);
-    this.mapNodeKeyIdx.clear();
-    nodeArr.forEach((n: go.ObjectData, idx: number) => {
-      this.mapNodeKeyIdx.set(n.key, idx);
-    });
-    console.log("map size: ", this.mapNodeKeyIdx.size);
-  }
-
-  /**
-   * Update map of link keys to their index in the array.
-   */
-  private refreshLinkIndex(linkArr: Array<go.ObjectData>) {
-    this.mapLinkKeyIdx.clear();
-    linkArr.forEach((l: go.ObjectData, idx: number) => {
-      this.mapLinkKeyIdx.set(l.key, idx);
-    });
-    // console.log('"linkArr"', linkArr);
-    // console.log("Map link key idx", this.mapLinkKeyIdx);
-    console.log("=========================");
-  }
-
-  /**
    * Updates Diagram state when DiagramManager receives new state from backend.
    * Should only update state when the state received from DiagramManager has changed.
    * @param props contains nodeDataArray that backend sent
@@ -93,16 +64,18 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     props: DiagramProps,
     state: DiagramState
   ) {
-    console.log("state received from Diagram Manager: ", props.dataFromApp);
-    if (state.cachedState != props.dataFromApp) {
-      console.log("updating state, with state received from Diagram Manager");
-      // this.refreshNodeIndex(props.dataFromApp);
-      return {
-        cachedState: props.dataFromApp,
-        nodeDataArray: props.dataFromApp,
-        skipsDiagramUpdate: true,
-      };
+    console.log("state received from DiagramManager: ", props.dataFromApp);
+    if (state.cachedState === props.dataFromApp) {
+      return null;
     }
+
+    console.log("updating state, with state received from Diagram Manager");
+    // this.refreshNodeIndex(props.dataFromApp);
+    return {
+      cachedState: props.dataFromApp,
+      nodeDataArray: props.dataFromApp,
+      skipsDiagramUpdate: true,
+    };
   }
 
   /**
@@ -110,11 +83,160 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    * On ChangedSelection, find the corresponding data and set the selectedData state.
    * @param e a GoJS DiagramEvent
    */
-  public handleDiagramEvent(e: go.DiagramEvent) {
-    const name = e.name;
-    switch (name) {
-      default:
-        break;
+  public handleDiagramEvent(event: go.DiagramEvent) {
+    return;
+  }
+
+  private sendBackendUpdates(obj: go.IncrementalData) {
+    const insertedNodeKeys = obj.insertedNodeKeys;
+    const removedNodeKeys = obj.removedNodeKeys;
+    const modifiedNodeData = obj.modifiedNodeData;
+
+    const insertedLinkKeys = obj.insertedLinkKeys;
+    const removedLinkKeys = obj.removedLinkKeys;
+    const modifiedLinkData = obj.modifiedLinkData;
+
+    // node added or modified
+    if (modifiedNodeData) {
+      for (let nodeData of modifiedNodeData) {
+        if (insertedNodeKeys && insertedNodeKeys.includes(nodeData["key"])) {
+          console.log("node was inserted");
+          console.log(nodeData);
+
+          console.log("Sending POST request");
+          // TODO: use loc instead of x, y
+          fetch(
+            "https://localhost:7009/graph/vertices?" +
+              new URLSearchParams({
+                key: nodeData["key"],
+                type: nodeData["category"],
+                x: "1",
+                y: "5",
+              }),
+            { method: "POST" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully added node on backend`, nodeData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+        }
+        // node modified
+        else {
+          // TODO: update position with PUT request
+        }
+      }
+    }
+
+    // node removed
+    if (removedNodeKeys) {
+      for (let removedNodeKey of removedNodeKeys) {
+        if (removedNodeKey === undefined) {
+          continue;
+        }
+
+        fetch(
+          "https://localhost:7009/graph/vertices?" +
+            new URLSearchParams({
+              key: removedNodeKey.toString(),
+            }),
+          { method: "DELETE" }
+        )
+          .then((response) => {
+            if (response.ok) {
+              console.log(
+                `Successfully deleted key ${removedNodeKey} on backend`
+              );
+            } else {
+              throw new Error(
+                JSON.stringify({
+                  status: response.status,
+                  body: response.text(),
+                })
+              );
+            }
+          })
+          .catch((err) => console.log(err));
+      }
+    }
+
+    if (modifiedLinkData) {
+      console.log(modifiedLinkData);
+
+      for (let modifiedLink of modifiedLinkData) {
+        if (
+          insertedLinkKeys &&
+          insertedLinkKeys.includes(modifiedLink["key"])
+        ) {
+          fetch(
+            "https://localhost:7009/graph/edges?" +
+              new URLSearchParams({
+                srcKey: modifiedLink["from"].toString(),
+                dstKey: modifiedLink["to"].toString(),
+              }),
+            { method: "POST" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully added edge on backend`);
+                console.log(modifiedLink);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+        } else {
+          // TODO: update link with PUT
+          // or have to do delete then add (idk if the CRDT supports changing nodes)
+        }
+      }
+    }
+
+    if (removedLinkKeys) {
+      for (let removedLinkKey of removedLinkKeys) {
+        for (let linkData of this.state.linkDataArray) {
+          if (removedLinkKey !== linkData["key"]) {
+            continue;
+          }
+
+          fetch(
+            "https://localhost:7009/graph/edges?" +
+              new URLSearchParams({
+                srcKey: linkData["from"].toString(),
+                dstKey: linkData["to"].toString(),
+              }),
+            { method: "DELETE" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully removed edge on backend`);
+                console.log(linkData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+          break;
+        }
+      }
     }
   }
 
@@ -125,65 +247,66 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    */
   public handleModelChange(obj: go.IncrementalData) {
     const insertedNodeKeys = obj.insertedNodeKeys;
-    const modifiedNodeData = obj.modifiedNodeData;
     const removedNodeKeys = obj.removedNodeKeys;
+    const modifiedNodeData = obj.modifiedNodeData;
+
     const insertedLinkKeys = obj.insertedLinkKeys;
-    const modifiedLinkData = obj.modifiedLinkData;
     const removedLinkKeys = obj.removedLinkKeys;
+    const modifiedLinkData = obj.modifiedLinkData;
+
     const modifiedModelData = obj.modelData;
 
     // maintain maps of modified data so insertions don't need slow lookups
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
+
+    this.sendBackendUpdates(obj);
+
     this.setState(
       produce((draft: DiagramState) => {
-        console.log("MAPNODEKEYIDX:", this.mapNodeKeyIdx);
         let narr = draft.nodeDataArray;
 
-        //Maps the data of modified nodes to their key for faster node data lookup when insertedNodeKeys are checked
         if (modifiedNodeData) {
           console.log("node data modified ", modifiedNodeData);
+
           modifiedNodeData.forEach((nd: go.ObjectData) => {
             modifiedNodeMap.set(nd.key, nd);
+
             const idx = this.mapNodeKeyIdx.get(nd.key);
-            // check if node exists
             if (idx !== undefined && idx >= 0) {
               narr[idx] = nd;
             }
           });
           console.log("Modified node map", modifiedNodeMap);
         }
-        // Checks if the inserted nodes were added to mapNodeKeyIdx (i.e. check if node is already in array).
-        // If not, the nodes are added to the map and nodeDatAarray.
+
         if (insertedNodeKeys) {
           console.log("node(s) inserted", insertedNodeKeys);
+
           insertedNodeKeys.forEach((key: go.Key) => {
             // Check if multiple nodes were added at the same time
             // this can only happen when state is received from backend
             if (insertedNodeKeys.length > 1) {
               this.refreshNodeIndex(narr);
             }
+
             const nd = modifiedNodeMap.get(key);
-            // Check if node with this key already exists
+
             const idx = this.mapNodeKeyIdx.get(key);
             if (nd && idx === undefined) {
               console.log("adding node to mapnodeidx");
-              // nodes won't be added to mapNodeKeyIdx if they already exist
               this.mapNodeKeyIdx.set(nd.key, narr.length);
               console.log("narr length: ", narr.length);
               narr.push(nd);
             }
           });
         }
-        // Removes the removed nodes' data from state and updates mapNodeKeyIdx
+
         if (removedNodeKeys) {
           console.log("node(s) removed", removedNodeKeys);
-          narr = narr.filter((nd: go.ObjectData) => {
-            if (removedNodeKeys.includes(nd.key)) {
-              return false;
-            }
-            return true;
-          });
+          narr = narr.filter(
+            (nd: go.ObjectData) => !removedNodeKeys.includes(nd.key)
+          );
           draft.nodeDataArray = narr;
           this.refreshNodeIndex(narr);
         }
@@ -199,37 +322,33 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
             }
           });
         }
-        // Checks if the inserted links were added to mapLinkKeyIdx.
-        // If not, the links are added to the map.
+
         if (insertedLinkKeys) {
           console.log("link inserted", insertedLinkKeys);
           insertedLinkKeys.forEach((key: go.Key) => {
             const ld = modifiedLinkMap.get(key);
             const idx = this.mapLinkKeyIdx.get(key);
             if (ld && idx === undefined) {
-              // links won't be added if they already exist
               this.mapLinkKeyIdx.set(ld.key, larr.length);
               larr.push(ld);
             }
           });
         }
-        // Removes the removed links' data from state and updates mapLinkKeyIdx
+
         if (removedLinkKeys) {
           console.log("link(s) removed", removedLinkKeys);
-          larr = larr.filter((ld: go.ObjectData) => {
-            if (removedLinkKeys.includes(ld.key)) {
-              return false;
-            }
-            return true;
-          });
+          larr = larr.filter(
+            (ld: go.ObjectData) => !removedLinkKeys.includes(ld.key)
+          );
           draft.linkDataArray = larr;
           this.refreshLinkIndex(larr);
         }
-        // handle model data changes, for now just replacing with the supplied object
+
         if (modifiedModelData) {
           console.log("model data modified", modifiedModelData);
           draft.modelData = modifiedModelData;
         }
+
         draft.skipsDiagramUpdate = true; // the GoJS model already knows about these updates
         console.log("------------------");
       })
@@ -237,7 +356,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   }
 
   public render() {
-    console.log("Diagram Container reloaded");
+    console.log("DiagramContainer rendering");
     console.log("node data array: ", this.state.nodeDataArray);
     console.log("=========================");
     return (
@@ -250,6 +369,32 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         onModelChange={this.handleModelChange}
       />
     );
+  }
+
+  /**
+   * Update map of node keys to their index in the array.
+   */
+  private refreshNodeIndex(nodeArr: Array<go.ObjectData>) {
+    this.mapNodeKeyIdx.clear();
+    nodeArr.forEach((n: go.ObjectData, idx: number) => {
+      this.mapNodeKeyIdx.set(n.key, idx);
+    });
+    console.log("=========================");
+    console.log('"nodeArr"', nodeArr);
+    console.log("Map node key idx", this.mapNodeKeyIdx);
+  }
+
+  /**
+   * Update map of link keys to their index in the array.
+   */
+  private refreshLinkIndex(linkArr: Array<go.ObjectData>) {
+    this.mapLinkKeyIdx.clear();
+    linkArr.forEach((l: go.ObjectData, idx: number) => {
+      this.mapLinkKeyIdx.set(l.key, idx);
+    });
+    console.log('"linkArr"', linkArr);
+    console.log("Map link key idx", this.mapLinkKeyIdx);
+    console.log("=========================");
   }
 }
 
