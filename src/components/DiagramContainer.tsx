@@ -198,6 +198,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
               }
             })
             .catch((err) => console.log(err));
+        } else {
+          // TODO: update link with PUT
+          // or have to do delete then add (idk if the CRDT supports changing nodes)
         }
       }
     }
