@@ -4,6 +4,12 @@ import "./App.css";
 import PaletteWrapper from "./components/PaletteWrapper";
 import DiagramManager from "./components/DiagramManager";
 
+// Importing the Bootstrap CSS
+import "bootstrap/dist/css/bootstrap.min.css";
+
+import Container from "react-bootstrap/Container";
+import Navbar from "react-bootstrap/Navbar";
+
 // ---------- Functions that generate the Logic Gate figures ----------------
 
 var KAPPA = 4 * ((Math.sqrt(2) - 1) / 3);
@@ -518,11 +524,37 @@ go.Shape.defineFigureGenerator("Inverter", function (shape, w, h) {
 
 function App() {
   return (
-    <div>
-      <div className="container">
+    <div className="app">
+      <Navbar bg="light">
+        <Container>
+          <Navbar.Brand>
+            <img
+              alt=""
+              src="plus.png"
+              width="30"
+              height="30"
+              className="d-inline-block align-top"
+            />{" "}
+            Focall - Collaborative Digital Logic Circuit Diagram Editor
+          </Navbar.Brand>
+        </Container>
+      </Navbar>
+      <div className="gojs-container">
         <PaletteWrapper />
         <DiagramManager />
       </div>
+      <Navbar bg="light">
+        <Container className="justify-content-center">
+          <div>
+            Created using Conflict-Free Replicated Data Types (CRDTs). See the
+            source code{" "}
+            <a href="https://github.com/ayshon/Focall" target="_blank">
+              here
+            </a>
+            .
+          </div>
+        </Container>
+      </Navbar>
     </div>
   );
 }
