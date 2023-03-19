@@ -1,8 +1,29 @@
 import * as go from "gojs";
 
 import "./App.css";
-import PaletteWrapper from "./components/PaletteWrapper";
-import DiagramManager from "./components/DiagramManager";
+import Header from "./components/Header";
+import Diagram from "./components/Diagram";
+import Palette from "./components/Pallete";
+import Footer from "./components/Footer";
+import Images from "./components/Images";
+
+// Importing the Bootstrap CSS
+import "bootstrap/dist/css/bootstrap.min.css";
+
+import Container from "react-bootstrap/Container";
+import Navbar from "react-bootstrap/Navbar";
+
+function App() {
+  return (
+    <div className="app">
+      <Header></Header>
+      <Palette></Palette>
+      <Diagram></Diagram>
+      <Footer></Footer>
+      <Images></Images>
+    </div>
+  );
+}
 
 // ---------- Functions that generate the Logic Gate figures ----------------
 
@@ -515,16 +536,5 @@ go.Shape.defineFigureGenerator("Inverter", function (shape, w, h) {
 });
 
 // --------------- end of functions that generate logic gate figures ----------------------------
-
-function App() {
-  return (
-    <div>
-      <div className="container">
-        <PaletteWrapper />
-        <DiagramManager />
-      </div>
-    </div>
-  );
-}
 
 export default App;

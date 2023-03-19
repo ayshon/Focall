@@ -5,7 +5,7 @@ import * as go from "gojs";
 import DiagramContainer from "./DiagramContainer";
 import { link } from "fs";
 
-function DiagramManager() {
+function DiagramManager(props: any) {
   // --------------- Connection to Backend Setup ---------------
 
   const [backendListener, setBackendListener] = useState<any>(null);
@@ -74,6 +74,7 @@ function DiagramManager() {
       newNodeState={nodeDataArray}
       newLinkState={linkDataArray}
       fromOther={fromOther}
+      printState={props.printState}
     />
   );
 }

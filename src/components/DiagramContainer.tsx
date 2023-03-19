@@ -23,6 +23,7 @@ interface DiagramProps {
   newNodeState: Array<go.ObjectData>;
   newLinkState: Array<go.ObjectData>;
   fromOther: boolean;
+  printState: boolean;
 }
 
 class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
@@ -162,8 +163,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       // NOTE: this is O(n^2)
       // FIXME: keep an eye on this if its slow
       for (let removedLinkKey of removedLinkKeys) {
-        console.log("removing link key")
-        console.log(removedLinkKey)
+        console.log("removing link key");
+        console.log(removedLinkKey);
         for (let linkData of this.state.linkDataArray) {
           console.log(linkData);
           if (removedLinkKey !== linkData["key"]) {
@@ -199,7 +200,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
-    await new Promise(f => setTimeout(f, 100));
+    await new Promise((f) => setTimeout(f, 100));
 
     // node added or modified
     if (modifiedNodeData) {
@@ -239,7 +240,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
-    if(removedNodeKeys) {
+    if (removedNodeKeys) {
       console.log("removed Node keys:");
       console.log(removedNodeKeys);
     }
@@ -412,6 +413,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         skipsDiagramUpdate={this.state.skipsDiagramUpdate}
         onDiagramEvent={this.handleDiagramEvent}
         onModelChange={this.handleModelChange}
+        printState={this.props.printState}
       />
     );
   }

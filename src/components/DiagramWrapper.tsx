@@ -10,6 +10,7 @@ interface DiagramProps {
   skipsDiagramUpdate: boolean;
   onDiagramEvent: (e: go.DiagramEvent) => void;
   onModelChange: (e: go.IncrementalData) => void;
+  printState: boolean;
 }
 
 var red = "orangered"; // 0 or false
@@ -25,7 +26,15 @@ export class DiagramWrapper extends React.Component<DiagramProps, {}> {
   constructor(props: DiagramProps) {
     super(props);
     this.diagramRef = React.createRef();
+    this.state = {};
   }
+
+  // public static getDerivedStateFromProps(props: DiagramProps) {
+  //   if (props.printState) {
+  //     console.log("time to print!");
+  //   }
+  //   return null;
+  // }
 
   /**
    * Get the diagram reference and add any desired diagram listeners.
@@ -337,7 +346,39 @@ export class DiagramWrapper extends React.Component<DiagramProps, {}> {
     return myDiagram;
   }
 
+  private printing(printState: boolean) {
+    if (printState) {
+      console.log("time to print!");
+      var imgDiv = document.getElementById("myImages");
+
+      var myDiagram = this.diagramRef.current?.getDiagram();
+      console.log("print imgDiv: ", imgDiv);
+      imgDiv!.innerHTML = ""; // clear out the old images, if any
+
+      var db = myDiagram?.documentBounds;
+      var boundswidth = db!.width;
+      var boundsheight = db!.height;
+      var imgWidth = 1400;
+      var imgHeight = 680;
+      var p = db!.position;
+      for (let i = 0; i < boundsheight; i += imgHeight) {
+        for (let j = 0; j < boundswidth; j += imgWidth) {
+          var img = myDiagram?.makeImage({
+            scale: 1,
+            position: new go.Point(p.x + j, p.y + i),
+            size: new go.Size(imgWidth, imgHeight),
+          });
+          // Append the new HTMLImageElement to the #myImages div
+          img!.className = "images";
+          imgDiv?.appendChild(img!);
+          imgDiv?.appendChild(document.createElement("br"));
+        }
+      }
+    }
+  }
+
   public render() {
+    this.printing(this.props.printState);
     return (
       <ReactDiagram
         ref={this.diagramRef}
