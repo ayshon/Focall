@@ -15,11 +15,14 @@ interface DiagramState {
   modelData: go.ObjectData;
   selectedData: go.ObjectData | null;
   skipsDiagramUpdate: boolean;
-  cachedState: Array<go.ObjectData>;
+  cachedNodeState: Array<go.ObjectData>;
+  cachedLinkState: Array<go.ObjectData>;
 }
 
 interface DiagramProps {
-  dataFromApp: Array<go.ObjectData>;
+  newNodeState: Array<go.ObjectData>;
+  newLinkState: Array<go.ObjectData>;
+  fromOther: boolean;
 }
 
 class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
@@ -31,15 +34,15 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   constructor(props: DiagramProps) {
     super(props);
     this.state = {
-      nodeDataArray: this.props.dataFromApp,
-      // TODO: linkDataArray will need to depend on data from app as well
-      linkDataArray: [],
+      nodeDataArray: this.props.newNodeState,
+      linkDataArray: this.props.newLinkState,
       modelData: {
         canRelink: true,
       },
       selectedData: null,
       skipsDiagramUpdate: false,
-      cachedState: [],
+      cachedNodeState: [],
+      cachedLinkState: [],
     };
 
     // initialize maps
@@ -64,16 +67,29 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     props: DiagramProps,
     state: DiagramState
   ) {
-    console.log("state received from DiagramManager: ", props.dataFromApp);
-    if (state.cachedState === props.dataFromApp) {
+    // console.log(
+    //   "node state received from DiagramManager: ",
+    //   props.newNodeState
+    // );
+    // console.log(
+    //   "link state received from DiagramManager: ",
+    //   props.newLinkState
+    // );
+    if (
+      state.cachedNodeState === props.newNodeState &&
+      state.cachedLinkState === props.newLinkState
+    ) {
+      console.log("no new state from server.");
       return null;
     }
 
     console.log("updating state, with state received from Diagram Manager");
     // this.refreshNodeIndex(props.dataFromApp);
     return {
-      cachedState: props.dataFromApp,
-      nodeDataArray: props.dataFromApp,
+      cachedNodeState: props.newNodeState,
+      nodeDataArray: props.newNodeState,
+      cachedLinkState: props.newLinkState,
+      linkDataArray: props.newLinkState,
       skipsDiagramUpdate: true,
     };
   }
@@ -87,10 +103,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     return;
   }
 
-  private sendBackendUpdates(modelChanges: go.IncrementalData) {
-    // TODO: fix order of backend requests when there are multiple changes
-    // should delete links before deleting nodes
-
+  private async sendBackendUpdates(modelChanges: go.IncrementalData) {
     console.log("Sending updates to backend");
 
     const insertedNodeKeys = modelChanges.insertedNodeKeys;
@@ -101,98 +114,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     const removedLinkKeys = modelChanges.removedLinkKeys;
     const modifiedLinkData = modelChanges.modifiedLinkData;
 
-    // node added or modified
-    if (modifiedNodeData) {
-      for (let nodeData of modifiedNodeData) {
-        if (insertedNodeKeys && insertedNodeKeys.includes(nodeData["key"])) {
-          console.log("node was inserted");
-          console.log(nodeData);
-
-          console.log("Sending POST request");
-          fetch(
-            "https://localhost:7009/graph/vertices?" +
-              new URLSearchParams({
-                key: nodeData["key"],
-                type: nodeData["category"],
-                loc: nodeData["loc"],
-              }),
-            { method: "POST" }
-          )
-            .then((response) => {
-              if (response.ok) {
-                console.log(`Successfully added node on backend`, nodeData);
-              } else {
-                throw new Error(
-                  JSON.stringify({
-                    status: response.status,
-                    body: response.text(),
-                  })
-                );
-              }
-            })
-            .catch((err) => console.log(err));
-        } else {
-          console.log("node was updated");
-          console.log(nodeData);
-
-          console.log("Sending PUT request");
-          fetch(
-            "https://localhost:7009/graph/vertices?" +
-              new URLSearchParams({
-                key: nodeData["key"],
-                loc: nodeData["loc"],
-              }),
-            { method: "PUT" }
-          )
-            .then((response) => {
-              if (response.ok) {
-                console.log(`Successfully modified node on backend`, nodeData);
-              } else {
-                throw new Error(
-                  JSON.stringify({
-                    status: response.status,
-                    body: response.text(),
-                  })
-                );
-              }
-            })
-            .catch((err) => console.log(err));
-        }
-      }
-    }
-
-    // node removed
-    if (removedNodeKeys) {
-      for (let removedNodeKey of removedNodeKeys) {
-        if (removedNodeKey === undefined) {
-          continue;
-        }
-
-        fetch(
-          "https://localhost:7009/graph/vertices?" +
-            new URLSearchParams({
-              key: removedNodeKey.toString(),
-            }),
-          { method: "DELETE" }
-        )
-          .then((response) => {
-            if (response.ok) {
-              console.log(
-                `Successfully deleted key ${removedNodeKey} on backend`
-              );
-            } else {
-              throw new Error(
-                JSON.stringify({
-                  status: response.status,
-                  body: response.text(),
-                })
-              );
-            }
-          })
-          .catch((err) => console.log(err));
-      }
-    }
-
+    // NOTE: the order of the following matters
+    // deletion of links must come before deletion of nodes
     if (modifiedLinkData) {
       console.log(modifiedLinkData);
 
@@ -201,6 +124,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           insertedLinkKeys &&
           insertedLinkKeys.includes(modifiedLink["key"])
         ) {
+          console.log("Sending POST add link request");
+
           fetch(
             "https://localhost:7009/graph/edges?" +
               new URLSearchParams({
@@ -230,16 +155,24 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
       }
     }
 
+    console.log("removedLinkKeys");
+    console.log(removedLinkKeys);
+
     if (removedLinkKeys) {
       // NOTE: this is O(n^2)
       // FIXME: keep an eye on this if its slow
       for (let removedLinkKey of removedLinkKeys) {
+        console.log("removing link key")
+        console.log(removedLinkKey)
         for (let linkData of this.state.linkDataArray) {
+          console.log(linkData);
           if (removedLinkKey !== linkData["key"]) {
             continue;
           }
 
-          fetch(
+          console.log("Sending POST removed link request");
+
+          await fetch(
             "https://localhost:7009/graph/edges?" +
               new URLSearchParams({
                 srcKey: linkData["from"].toString(),
@@ -261,9 +194,81 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
               }
             })
             .catch((err) => console.log(err));
-
           break;
         }
+      }
+    }
+
+    await new Promise(f => setTimeout(f, 100));
+
+    // node added or modified
+    if (modifiedNodeData) {
+      for (let nodeData of modifiedNodeData) {
+        if (insertedNodeKeys && insertedNodeKeys.includes(nodeData["key"])) {
+          console.log("node was inserted");
+          console.log(nodeData);
+
+          console.log("Sending POST inserted node request");
+          fetch(
+            "https://localhost:7009/graph/vertices?" +
+              new URLSearchParams({
+                key: nodeData["key"],
+                category: nodeData["category"],
+                loc: nodeData["loc"],
+              }),
+            { method: "POST" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully added node on backend`, nodeData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
+        }
+        // node modified
+        else {
+          // TODO: update position with PUT request
+        }
+      }
+    }
+
+    // node removed
+    if (removedNodeKeys) {
+      for (let removedNodeKey of removedNodeKeys) {
+        if (removedNodeKey === undefined) {
+          continue;
+        }
+        console.log("Sending POST removed node request");
+
+        fetch(
+          "https://localhost:7009/graph/vertices?" +
+            new URLSearchParams({
+              key: removedNodeKey.toString(),
+            }),
+          { method: "DELETE" }
+        )
+          .then((response) => {
+            if (response.ok) {
+              console.log(
+                `Successfully deleted key ${removedNodeKey} on backend`
+              );
+            } else {
+              throw new Error(
+                JSON.stringify({
+                  status: response.status,
+                  body: response.text(),
+                })
+              );
+            }
+          })
+          .catch((err) => console.log(err));
       }
     }
 
@@ -275,7 +280,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
    * This method iterates over those changes and updates state to keep in sync with the GoJS model.
    * @param modelChanges a JSON-formatted string
    */
-  public handleModelChange(modelChanges: go.IncrementalData) {
+  public async handleModelChange(modelChanges: go.IncrementalData) {
     const insertedNodeKeys = modelChanges.insertedNodeKeys;
     const removedNodeKeys = modelChanges.removedNodeKeys;
     const modifiedNodeData = modelChanges.modifiedNodeData;
@@ -290,7 +295,10 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     const modifiedNodeMap = new Map<go.Key, go.ObjectData>();
     const modifiedLinkMap = new Map<go.Key, go.ObjectData>();
 
-    this.sendBackendUpdates(modelChanges);
+    // console.log("fromOther: ", this.props.fromOther);
+    if (!this.props.fromOther) {
+      await this.sendBackendUpdates(modelChanges);
+    }
 
     this.setState(
       produce((draft: DiagramState) => {
@@ -389,6 +397,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
   public render() {
     console.log("DiagramContainer rendering");
     console.log("node data array: ", this.state.nodeDataArray);
+    console.log("link data array: ", this.state.linkDataArray);
     console.log("==================================================");
     return (
       <DiagramWrapper
@@ -410,9 +419,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     nodeArr.forEach((n: go.ObjectData, idx: number) => {
       this.mapNodeKeyIdx.set(n.key, idx);
     });
-    console.log('"nodeArr"', nodeArr);
-    console.log("Map node key idx", this.mapNodeKeyIdx);
-    console.log("==================================================");
+    // console.log('"nodeArr"', nodeArr);
+    // console.log("Map node key idx", this.mapNodeKeyIdx);
+    // console.log("==================================================");
   }
 
   /**
@@ -423,9 +432,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
     linkArr.forEach((l: go.ObjectData, idx: number) => {
       this.mapLinkKeyIdx.set(l.key, idx);
     });
-    console.log('"linkArr"', linkArr);
-    console.log("Map link key idx", this.mapLinkKeyIdx);
-    console.log("==================================================");
+    // console.log('"linkArr"', linkArr);
+    // console.log("Map link key idx", this.mapLinkKeyIdx);
+    // console.log("==================================================");
   }
 }
 
