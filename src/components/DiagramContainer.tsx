@@ -328,9 +328,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
           insertedNodeKeys.forEach((key: go.Key) => {
             // Check if multiple nodes were added at the same time
             // this can only happen when state is received from backend
-            // if (insertedNodeKeys.length > 1) {
-            this.refreshNodeIndex(narr);
-            // }
+            if (insertedNodeKeys.length > 1) {
+              this.refreshNodeIndex(narr);
+            }
 
             const nd = modifiedNodeMap.get(key);
 
@@ -367,7 +367,9 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         }
 
         if (insertedLinkKeys) {
-          this.refreshLinkIndex(larr);
+          if (insertedLinkKeys.length > 1) {
+            this.refreshLinkIndex(larr);
+          }
 
           insertedLinkKeys.forEach((key: go.Key) => {
             const ld = modifiedLinkMap.get(key);
