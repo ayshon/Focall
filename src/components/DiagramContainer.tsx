@@ -235,14 +235,33 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         }
         // node modified
         else {
-          // TODO: update position with PUT request
+          console.log("node was updated");
+          console.log(nodeData);
+
+          console.log("Sending PUT request");
+          fetch(
+            "https://localhost:7009/graph/vertices?" +
+              new URLSearchParams({
+                key: nodeData["key"],
+                loc: nodeData["loc"],
+              }),
+            { method: "PUT" }
+          )
+            .then((response) => {
+              if (response.ok) {
+                console.log(`Successfully modified node on backend`, nodeData);
+              } else {
+                throw new Error(
+                  JSON.stringify({
+                    status: response.status,
+                    body: response.text(),
+                  })
+                );
+              }
+            })
+            .catch((err) => console.log(err));
         }
       }
-    }
-
-    if (removedNodeKeys) {
-      console.log("removed Node keys:");
-      console.log(removedNodeKeys);
     }
 
     // node removed
@@ -328,13 +347,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         if (insertedNodeKeys) {
           console.log("node(s) inserted", insertedNodeKeys);
 
+          this.refreshNodeIndex(narr);
           insertedNodeKeys.forEach((key: go.Key) => {
-            // Check if multiple nodes were added at the same time
-            // this can only happen when state is received from backend
-            if (insertedNodeKeys.length > 1) {
-              this.refreshNodeIndex(narr);
-            }
-
             const nd = modifiedNodeMap.get(key);
 
             const idx = this.mapNodeKeyIdx.get(key);
@@ -370,6 +384,8 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
 
         if (insertedLinkKeys) {
           console.log("link inserted", insertedLinkKeys);
+          this.refreshLinkIndex(larr);
+
           insertedLinkKeys.forEach((key: go.Key) => {
             const ld = modifiedLinkMap.get(key);
             const idx = this.mapLinkKeyIdx.get(key);
