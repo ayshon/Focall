@@ -23,6 +23,7 @@ interface DiagramProps {
   newNodeState: Array<go.ObjectData>;
   newLinkState: Array<go.ObjectData>;
   fromOther: boolean;
+  printState: boolean;
 }
 
 class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
@@ -428,6 +429,7 @@ class DiagramContainer extends React.Component<DiagramProps, DiagramState> {
         skipsDiagramUpdate={this.state.skipsDiagramUpdate}
         onDiagramEvent={this.handleDiagramEvent}
         onModelChange={this.handleModelChange}
+        printState={this.props.printState}
       />
     );
   }
